@@ -1,4 +1,7 @@
+import csv
+
 from openpecha_data_cataloger.config import CATALOG_DIR
+from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 from openpecha_data_cataloger.utility import download_github_file
 
 
@@ -11,6 +14,7 @@ class Cataloger:
         self.token = token
         self.catalog_path = CATALOG_DIR / self.file_name
         self.get_catalog()
+        self.catalog = self.load_catalog()
 
     def get_catalog(self):
         download_github_file(
@@ -21,6 +25,12 @@ class Cataloger:
             destination_folder_path=self.catalog_path.parent,
         )
 
+    def load_catalog(self):
+        with open(self.catalog_path, newline="") as csvfile:
+            catalog = csv.DictReader(csvfile)
+            return list(catalog)
+
 
 if __name__ == "__main__":
-    cataloger = Cataloger(token="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")
+    cataloger = Cataloger(token=GITHUB_TOKEN)
+    print(cataloger.catalog)

@@ -1,3 +1,5 @@
+import time
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -6,14 +8,66 @@ from github import Github
 from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 
 
-def fetch_all_repos(token: str, org: str):
+def get_org_repos(org_name, token):
+    org_repos = []
     g = Github(token)
-    repos = g.get_organization(org).get_repos()
+    org = g.get_organization(org_name)
+    repos = org.get_repos()
+    for repo in repos:
+        org_repos.append(repo.name)
+    return org_repos
+
+
+def get_all_repos(org_name, token):
+    repos = []
+    page = 1
+    per_page = 100  # Number of repositories to retrieve per page
+
+    while True:
+        # Make a request to the GitHub API to retrieve repositories for the organization
+        url = f"https://api.github.com/orgs/{org_name}/repos?page={page}&per_page={per_page}"
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": f"token {token}",
+        }
+        response = requests.get(url, headers=headers)
+
+        # Handle rate limit exceeded error
+        if response.status_code == 403 and "rate limit exceeded" in response.text:
+            reset_time = datetime.fromtimestamp(
+                int(response.headers["X-RateLimit-Reset"])
+            )
+            sleep_seconds = (
+                reset_time - datetime.now()
+            ).total_seconds() + 10  # Add extra time buffer
+            print(f"Rate limit exceeded. Sleeping for {sleep_seconds} seconds.")
+            time.sleep(sleep_seconds)
+            continue
+
+        # Handle other errors
+        if response.status_code != 200:
+            print(f"Error occurred while fetching repositories: {response.status_code}")
+            break
+
+        # Retrieve repositories from the response
+        repositories = response.json()
+
+        # Add repositories to the list
+        repos.extend([repo["name"] for repo in repositories])
+        print(f"Number of repos:{len(repos)}")
+
+        # Check if there are more pages to retrieve
+        if len(repositories) < per_page:
+            break
+        # Increment the page number for the next request
+        page += 1
+        time.sleep(5)
+
     return repos
 
 
-def write_repos_to_file(token: str, org: str, file_name: str):
-    repos = fetch_all_repos(token, org)
+def write_repos_to_file(org: str, token: str, file_name: str):
+    repos = get_org_repos(org, token)
     with open(file_name, "w") as file:
         for repo in repos:
             file.write(repo.name + "\n")
@@ -48,4 +102,4 @@ def download_file(url: str, destination_folder_path: Path):
 
 
 if __name__ == "__main__":
-    write_repos_to_file(GITHUB_TOKEN, "OpenPecha-Data", "repos.txt")
+    write_repos_to_file("OpenPecha-Data", GITHUB_TOKEN, "repos.txt")
