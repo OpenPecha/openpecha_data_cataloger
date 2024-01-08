@@ -1,3 +1,4 @@
+import csv
 import time
 from datetime import datetime
 from pathlib import Path
@@ -99,6 +100,21 @@ def download_file(url: str, destination_folder_path: Path):
         print(f"file downloaded: {destination_folder_path.name}")
     else:
         print(f"Failed to download: {response.status_code}")
+
+
+def rewrite_csv(output_file, keys, data):
+    with open(output_file, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=keys)
+        writer.writeheader()
+        for row in data:
+            writer.writerow({key: row.get(key, None) for key in keys})
+
+
+def write_to_csv(output_file, keys, data):
+    with open(output_file, "a", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=keys)
+        for row in data:
+            writer.writerow({key: row.get(key, None) for key in keys})
 
 
 if __name__ == "__main__":
