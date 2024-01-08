@@ -4,9 +4,26 @@ from datetime import datetime
 from pathlib import Path
 
 import requests
+import yaml
 from github import Github
 
 from openpecha_data_cataloger.github_token import GITHUB_TOKEN
+
+
+def load_yaml(fn: Path) -> None:
+    # use yaml.CSafeLoader / if available but don't crash if it isn't
+    try:
+        yaml_loader = yaml.CSafeLoader
+    except (ImportError, AttributeError):
+        yaml_loader = yaml.SafeLoader  # type: ignore
+    return yaml.load(fn.open(encoding="utf-8"), Loader=yaml_loader)
+
+
+def merge_two_dictionary(dict1, dict2):
+    for key, value in dict2.items():
+        if key not in dict1:
+            dict1[key] = value
+    return dict1
 
 
 def get_org_repos(org_name, token):

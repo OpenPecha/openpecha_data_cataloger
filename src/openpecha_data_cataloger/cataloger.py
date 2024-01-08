@@ -8,6 +8,8 @@ from openpecha_data_cataloger.config import CATALOG_DIR, set_environment
 from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 from openpecha_data_cataloger.utility import (
     download_github_file,
+    load_yaml,
+    merge_two_dictionary,
     rewrite_csv,
     write_to_csv,
 )
@@ -59,12 +61,15 @@ class Cataloger:
         output_file = self.base_path / "meta_data.csv"
 
         for pecha in self.pechas:
-            # Collect pecha metadata
-            metadata = OrderedDict(vars(pecha.meta))
-            temp_data.append(metadata)
+            """meta already defined in openpecha toolkit"""
+            predefined_metadata = OrderedDict(vars(pecha.meta))
+            """meta from .opf/meta.yml"""
+            metadata = OrderedDict(get_meta_data_from_pecha(pecha))
+            merged_metadata = merge_two_dictionary(predefined_metadata, metadata)
+            temp_data.append(merged_metadata)
 
             # Check if there are any new keys
-            new_keys = OrderedSet(metadata.keys()) - keys
+            new_keys = OrderedSet(predefined_metadata.keys()) - keys
             if new_keys:
                 keys.update(new_keys)
                 rewrite_csv(output_file, keys, temp_data)
@@ -73,6 +78,12 @@ class Cataloger:
         # Final write if not already done
         if temp_data:
             write_to_csv(output_file, keys, temp_data)
+
+
+def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
+    """Get metadata from pecha file .opf/meta.yml itself"""
+    if pecha.meta_fn.is_file():
+        return load_yaml(pecha.meta_fn)
 
 
 if __name__ == "__main__":
