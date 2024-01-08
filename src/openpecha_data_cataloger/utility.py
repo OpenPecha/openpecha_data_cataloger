@@ -3,6 +3,21 @@ from pathlib import Path
 import requests
 from github import Github
 
+from openpecha_data_cataloger.github_token import GITHUB_TOKEN
+
+
+def fetch_all_repos(token: str, org: str):
+    g = Github(token)
+    repos = g.get_organization(org).get_repos()
+    return repos
+
+
+def write_repos_to_file(token: str, org: str, file_name: str):
+    repos = fetch_all_repos(token, org)
+    with open(file_name, "w") as file:
+        for repo in repos:
+            file.write(repo.name + "\n")
+
 
 def download_github_file(
     token, org: str, repo_name: str, file: str, destination_folder_path: Path
@@ -30,3 +45,7 @@ def download_file(url: str, destination_folder_path: Path):
         print(f"file downloaded: {destination_folder_path.name}")
     else:
         print(f"Failed to download: {response.status_code}")
+
+
+if __name__ == "__main__":
+    write_repos_to_file(GITHUB_TOKEN, "OpenPecha-Data", "repos.txt")
