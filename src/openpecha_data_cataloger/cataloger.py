@@ -63,6 +63,7 @@ class Cataloger:
         keys = OrderedSet(
             [
                 "Pecha ID",
+                "contains index",
                 "contains annotations",
                 "volume counts",
                 "volumes",
@@ -73,6 +74,7 @@ class Cataloger:
         for pecha in self.pechas:
             curr_row = OrderedDict()
             curr_row["Pecha ID"] = pecha.pecha_id
+            curr_row["contains index"] = "Yes" if pecha.index else "No"
             try:
                 curr_row["contains annotations"] = "Yes" if pecha.components else "No"
                 curr_row["volume counts"] = len(pecha.components)
@@ -148,5 +150,5 @@ def get_unenumed_layer_names_from_pecha(
 
 if __name__ == "__main__":
     cataloger = Cataloger(GITHUB_TOKEN)
-    cataloger.load_pechas(["P000216", "P000217", "O869F9D37"])
+    cataloger.load_pechas(["P000216", "I1A92E2D9", "P000217", "O869F9D37"])
     cataloger.generate_folder_structure_report()
