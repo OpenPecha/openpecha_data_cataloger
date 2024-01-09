@@ -1,5 +1,6 @@
 import csv
 from collections import OrderedDict
+from typing import List, Optional
 
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
@@ -11,6 +12,7 @@ from openpecha_data_cataloger.utility import (
     load_yaml,
     merge_two_dictionary,
     rewrite_csv,
+    write_header_to_csv,
     write_to_csv,
 )
 
@@ -55,6 +57,21 @@ class Cataloger:
     def load_pecha(self, pecha_id):
         return OpenPechaGitRepo(pecha_id=pecha_id)
 
+    def generate_folder_structure_report(self):
+        output_file = self.base_path / "folder_structure.csv"
+        keys = OrderedSet(
+            ["Pecha ID", "contains annotations", "volume counts", "Layer names"]
+        )
+        write_header_to_csv(output_file, keys)
+        for pecha in self.pechas:
+            curr_row = OrderedDict()
+            curr_row["Pecha ID"] = pecha.pecha_id
+            curr_row["contains annotations"] = "Yes" if pecha.components else "No"
+            curr_row["volume counts"] = len(pecha.components)
+            curr_row["Layer names"] = get_layer_names_from_pecha(pecha)
+
+            write_to_csv(output_file, keys, [curr_row])
+
     def generate_meta_data_report(self):
         keys = OrderedSet()
         temp_data = []
@@ -86,7 +103,14 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
         return load_yaml(pecha.meta_fn)
 
 
+def get_layer_names_from_pecha(pecha: OpenPechaGitRepo) -> Optional[List]:
+    """Get layer names from pecha file .opf/meta.yml itself"""
+    if not pecha.components:
+        return None
+    return [layer.value for vol, layers in pecha.components.items() for layer in layers]
+
+
 if __name__ == "__main__":
     cataloger = Cataloger(GITHUB_TOKEN)
     cataloger.load_pechas(["P000216", "P000217"])
-    cataloger.generate_meta_data_report()
+    cataloger.generate_folder_structure_report()

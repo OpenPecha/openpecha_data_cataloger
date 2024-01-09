@@ -127,6 +127,12 @@ def rewrite_csv(output_file, keys, data):
             writer.writerow({key: row.get(key, None) for key in keys})
 
 
+def write_header_to_csv(output_file, keys):
+    with open(output_file, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=keys)
+        writer.writeheader()
+
+
 def write_to_csv(output_file, keys, data):
     with open(output_file, "a", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=keys)
