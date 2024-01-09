@@ -1,7 +1,8 @@
 import csv
 from collections import OrderedDict
-from typing import List, Optional
+from typing import Optional
 
+from openpecha.core.layer import LayerEnum
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
 
@@ -60,15 +61,30 @@ class Cataloger:
     def generate_folder_structure_report(self):
         output_file = self.base_path / "folder_structure.csv"
         keys = OrderedSet(
-            ["Pecha ID", "contains annotations", "volume counts", "Layer names"]
+            [
+                "Pecha ID",
+                "contains annotations",
+                "volume counts",
+                "volumes",
+                "unenumed volumes",
+            ]
         )
         write_header_to_csv(output_file, keys)
         for pecha in self.pechas:
             curr_row = OrderedDict()
             curr_row["Pecha ID"] = pecha.pecha_id
-            curr_row["contains annotations"] = "Yes" if pecha.components else "No"
-            curr_row["volume counts"] = len(pecha.components)
-            curr_row["Layer names"] = get_layer_names_from_pecha(pecha)
+            try:
+                curr_row["contains annotations"] = "Yes" if pecha.components else "No"
+                curr_row["volume counts"] = len(pecha.components)
+                curr_row["volumes"] = get_layer_names_from_pecha(pecha)
+                curr_row["unenumed volumes"] = get_unenumed_layer_names_from_pecha(
+                    pecha
+                )
+            except FileNotFoundError:
+                curr_row["contains annotations"] = "No"
+                curr_row["volume counts"] = 0
+                curr_row["volumes"] = None
+                curr_row["unenumed volumes"] = None
 
             write_to_csv(output_file, keys, [curr_row])
 
@@ -103,14 +119,34 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
         return load_yaml(pecha.meta_fn)
 
 
-def get_layer_names_from_pecha(pecha: OpenPechaGitRepo) -> Optional[List]:
-    """Get layer names from pecha file .opf/meta.yml itself"""
+def get_layer_names_from_pecha(pecha: OpenPechaGitRepo) -> Optional[OrderedDict]:
+    """Get layer names from OpenPechaGitRepo object"""
     if not pecha.components:
         return None
-    return [layer.value for vol, layers in pecha.components.items() for layer in layers]
+    res = OrderedDict()
+    for vol, layers in pecha.components.items():
+        res[vol] = [layer.name for layer in layers]
+    return res
+
+
+def get_unenumed_layer_names_from_pecha(
+    pecha: OpenPechaGitRepo,
+) -> Optional[OrderedDict]:
+    """Get all layer names from .opf/layers it self object"""
+    if not pecha.components:
+        return None
+
+    res = OrderedDict()
+    all_layers = {layer.value for layer in LayerEnum}
+    for vol_dir in pecha.layers_path.iterdir():
+        # Collect layer names where its enum is not in LayerEnum
+        res[vol_dir.name] = [
+            fn.stem for fn in vol_dir.iterdir() if fn.stem not in all_layers
+        ]
+    return res
 
 
 if __name__ == "__main__":
     cataloger = Cataloger(GITHUB_TOKEN)
-    cataloger.load_pechas(["P000216", "P000217"])
+    cataloger.load_pechas(["P000216", "P000217", "O869F9D37"])
     cataloger.generate_folder_structure_report()
