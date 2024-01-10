@@ -1,0 +1,44 @@
+id: P000216
+initial_creation_type: ebook
+created_at: 31/01/2020
+last_modified_at: 25/11/2021
+source_metadata:
+  title: ༄༅། །ངེས་ཤེས་རིན་པོ་ཆེའི་སྒྲོན་མེའི་ཚིག་གི་དོན་གསལ་བའི་འགྲེལ་ཆུང་བློ་གྲོས་སྣང་བའི་སྒོ་འབྱེད་ཅེས་བྱ་བ་བཞུགས་སོ།
+    །
+  authors:
+  - མཛད་པ་པོ། མཁན་པོ་ཀུན་དཔལ།
+  layers:
+  - book_title
+  - author
+  - chapter_title
+  - quotation
+  - sabche
+  - yigchung
+  id: LEK-PHI-059-1-1
+web_metadata:
+  title:
+    en: Unlocking the Light of Intellegence:A Short Commentary on Mipham's Beacon
+      of Certainty
+    bo: ངེས་ཤེས་རིན་པོ་ཆེའི་སྒྲོན་མེའི་ཚིག་གི་དོན་གསལ་བའི་འགྲེལ་ཆུང་བློ་གྲོས་སྣང་བའི་སྒོ་འབྱེད་ཅེས་བྱ་བ་བཞུགས་སོ།།
+  collection:
+    en: Lekshey Ling Philosophy Series–  Book 59-1
+    bo: ལེགས་བཤད་གླིང་རིགས་པའི་གཞུང་ལུགས།–  དེབ། ༥༩ – ༡
+  author:
+    en: Khenpo Kunpal
+    bo: མཁན་པོ་ཀུན་དཔལ།
+  pusblisher:
+    en: Lekshey Ling Publications
+    bo: ཀརྨ་ལེགས་བཤད་གླིང།
+  sku: LEK-PHI-059-1-1
+  category:
+    en: ''
+    bo: ''
+  org:
+    bo: Timeless Treasuries
+    en: མཐའ་ཡས་དཔེ་མཛོད།
+  website: http://dharmacloud.tsadra.org
+  aquisition_data: '2019-07-18'
+  filename: LEK-PHI-059-1-1.epub
+  description:
+    en: ''
+    bo: ''

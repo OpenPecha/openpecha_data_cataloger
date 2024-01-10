@@ -1,0 +1,16 @@
+id: dec1e26ffdf34da691d7deab19d7e964
+annotation_type: Yigchung
+revision: '00001'
+annotations:
+  ca9764419fe945e5b42a0e5d6be10c2f:
+    span:
+      start: 189272
+      end: 189352
+  3e92bdc162b444fe96f12703fa880f0a:
+    span:
+      start: 189353
+      end: 189353
+  7096b502ac454492a7a3b62260eb7320:
+    span:
+      start: 189354
+      end: 189358
