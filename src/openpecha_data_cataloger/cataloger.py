@@ -62,10 +62,10 @@ class Cataloger:
     def generate_folder_structure_report(self):
         keys = OrderedSet(
             [
-                "Pecha ID",
+                "id",
                 "contains index",
                 "contains annotations",
-                "volume counts",
+                "volume count",
                 "volumes",
                 "unenumed volumes",
             ]
@@ -74,19 +74,19 @@ class Cataloger:
 
         for pecha in self.pechas:
             curr_row = OrderedDict()
-            curr_row["Pecha ID"] = pecha.pecha_id
+            curr_row["id"] = pecha.pecha_id
             curr_row["contains index"] = "Yes" if pecha.index else "No"
 
             try:
                 curr_row["contains annotations"] = "Yes" if pecha.components else "No"
-                curr_row["volume counts"] = len(pecha.components)
+                curr_row["volume count"] = len(pecha.components)
                 curr_row["volumes"] = get_layer_names_from_pecha(pecha)
                 curr_row["unenumed volumes"] = get_unenumed_layer_names_from_pecha(
                     pecha
                 )
             except FileNotFoundError:
                 curr_row["contains annotations"] = "No"
-                curr_row["volume counts"] = 0
+                curr_row["volume count"] = 0
                 curr_row["volumes"] = None
                 curr_row["unenumed volumes"] = None
 
@@ -164,6 +164,6 @@ def get_unenumed_layer_names_from_pecha(
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.load_pechas(pecha_ids=["P000216", "P000217"])
+    cataloger.load_pechas(pecha_ids=["P000216", "I1A92E2D9", "O869F9D37"])
     df = cataloger.generate_folder_structure_report()
     df.to_csv(CATALOG_DIR / "folder_structure_data.csv")

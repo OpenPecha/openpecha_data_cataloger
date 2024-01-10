@@ -1,0 +1,43 @@
+id: ab39928ac6484f6d947ad64526c8086b
+annotation_type: index
+revision: '00001'
+annotations:
+  260393c848b4409b97bd2167b5e346a0:
+    base: ABFB.txt
+    Chapters:
+    - title: Title
+      span:
+        start: 0
+        end: 32
+    - title: Preface
+      span:
+        start: 33
+        end: 214
+    - title: Chapters I-V
+      span:
+        start: 215
+        end: 7017
+    - title: Chapters VI-X
+      span:
+        start: 7018
+        end: 15936
+    - title: Chapters XI-XV
+      span:
+        start: 15937
+        end: 20852
+    - title: Chapters XVI-XX
+      span:
+        start: 20853
+        end: 29886
+    - title: Chapters XXI-XXV
+      span:
+        start: 29887
+        end: 43088
+    - title: Chapters XXVI-XXVII
+      span:
+        start: 43089
+        end: 47485
+    - title: Colophon
+      span:
+        start: 47486
+        end: 47496
