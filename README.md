@@ -7,18 +7,17 @@
 
 <!-- Replace with 1-sentence description about what this tool is or does.-->
 
-<h3 align="center">Use this repo template for all new Python projects.</h3>
+<h3 align="center">openpecha data cataloger</h3>
 
 ## Description
 
-Project description goes here.
+Build a catalog for OpenPecha-Data with latest changes
 
 ## Project owner(s)
 
 <!-- Link to the repo owners' github profiles -->
 
-- [@10zinten](https://github.com/10zinten)
-- [@evanyerburgh](https://github.com/evanyerburgh)
+- [@tenzin3](https://github.com/tenzin3)
 
 ## Integrations
 
