@@ -14,7 +14,7 @@ def _mkdir(path):
 def set_environment():
     os.environ["GITHUB_TOKEN"] = GITHUB_TOKEN
     os.environ["OPENPECHA_DATA_GITHUB_ORG"] = "OpenPecha-Data"
-    os.environ["GITHUB_USERNAME"] = "gangagyatso4364"
+    os.environ["GITHUB_USERNAME"] = "tenzin3"
 
 
 ROOT_DIR = Path(__file__).parent.parent.parent

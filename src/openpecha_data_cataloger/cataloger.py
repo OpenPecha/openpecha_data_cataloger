@@ -1,6 +1,8 @@
-import csv
 from collections import OrderedDict
+from pathlib import Path
+from typing import Optional
 
+import pandas as pd
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
 
@@ -26,7 +28,7 @@ class Cataloger:
         self.catalog_path = self.base_path / self.file_name
         self.get_catalog()
         self.catalog = self.load_catalog()
-        self.pecha_ids = self.get_catalog_pecha_names()
+        self.pecha_ids = self.get_catalog_pecha_ids()
         set_environment()
 
     def get_catalog(self):
@@ -40,25 +42,26 @@ class Cataloger:
             )
 
     def load_catalog(self):
-        with open(self.catalog_path, newline="") as csvfile:
-            catalog = csv.DictReader(csvfile)
-            return list(catalog)
+        return pd.read_csv(self.catalog_path)
 
-    def get_catalog_pecha_names(self):
-        return [row["Pecha ID"] for row in self.catalog]
+    def get_catalog_pecha_ids(self):
+        return self.catalog["Pecha ID"].to_list()
 
-    def load_pechas(self, pecha_ids=None):
+    def load_pechas(self, pecha_ids=None, path: Optional[Path] = None):
+        """if pecha_ids is None, load all pechas in catalog"""
+        """provide the folder path where pechas are located"""
         if pecha_ids is None:
             pecha_ids = self.pecha_ids
-        self.pechas = (self.load_pecha(pecha_id) for pecha_id in pecha_ids)
+        self.pechas = (self.load_pecha(pecha_id, path) for pecha_id in pecha_ids)
 
-    def load_pecha(self, pecha_id):
-        return OpenPechaGitRepo(pecha_id=pecha_id)
+    def load_pecha(self, pecha_id, path=None):
+        return OpenPechaGitRepo(pecha_id=pecha_id, path=str(path / pecha_id))
 
-    def generate_meta_data_report(self):
+    def generate_meta_data_report(self, output_file_path: Optional[Path] = None):
         keys = OrderedSet()
         temp_data = []
-        output_file = self.base_path / "meta_data.csv"
+        if output_file_path is None:
+            output_file_path = self.base_path / "meta_data.csv"
 
         for pecha in self.pechas:
             """meta already defined in openpecha toolkit"""
@@ -72,12 +75,12 @@ class Cataloger:
             new_keys = OrderedSet(predefined_metadata.keys()) - keys
             if new_keys:
                 keys.update(new_keys)
-                rewrite_csv(output_file, keys, temp_data)
+                rewrite_csv(output_file_path, keys, temp_data)
                 temp_data = []
 
         # Final write if not already done
         if temp_data:
-            write_to_csv(output_file, keys, temp_data)
+            write_to_csv(output_file_path, keys, temp_data)
 
 
 def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
@@ -89,4 +92,4 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
 if __name__ == "__main__":
     cataloger = Cataloger(GITHUB_TOKEN)
     cataloger.load_pechas(["P000216", "P000217"])
-    cataloger.generate_meta_data_report()
+    print(cataloger.catalog)
