@@ -9,7 +9,6 @@ from ordered_set import OrderedSet
 from pandas import DataFrame
 
 from openpecha_data_cataloger.config import CATALOG_DIR, set_environment
-from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 from openpecha_data_cataloger.utility import (
     download_github_file,
     load_yaml,
@@ -100,7 +99,8 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.get_catalog(GITHUB_TOKEN)
+    github_token = ""
+    cataloger.get_catalog(github_token)
     cataloger.load_pechas(["P000216", "P000217"])
     df = cataloger.generate_meta_data_report()
     df.to_csv(CATALOG_DIR / "meta_data.csv")
