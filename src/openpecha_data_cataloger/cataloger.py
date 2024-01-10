@@ -1,18 +1,19 @@
-import csv
 from collections import OrderedDict
+from enum import Enum
+from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 from openpecha.core.layer import LayerEnum
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
+from pandas import DataFrame
 
 from openpecha_data_cataloger.config import CATALOG_DIR, set_environment
-from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 from openpecha_data_cataloger.utility import (
     download_github_file,
     load_yaml,
     merge_two_dictionary,
-    rewrite_csv,
     write_header_to_csv,
     write_to_csv,
 )
@@ -23,40 +24,42 @@ class Cataloger:
     repo = "catalog"
     file_name = "opf_catalog.csv"
 
-    def __init__(self, token: str):
-        self.token = token
+    def __init__(self):
         self.base_path = CATALOG_DIR
         self.catalog_path = self.base_path / self.file_name
-        self.get_catalog()
-        self.catalog = self.load_catalog()
-        self.pecha_ids = self.get_catalog_pecha_names()
         set_environment()
 
-    def get_catalog(self):
+    def get_catalog(self, token: str):
         if not self.catalog_path.exists():
             download_github_file(
-                token=self.token,
+                token=token,
                 org=self.org,
                 repo_name=self.repo,
                 file=self.file_name,
                 destination_folder_path=self.catalog_path.parent,
             )
+        self.catalog = self.load_catalog()
+        self.pecha_ids = self.get_catalog_pecha_ids()
 
     def load_catalog(self):
-        with open(self.catalog_path, newline="") as csvfile:
-            catalog = csv.DictReader(csvfile)
-            return list(catalog)
+        return pd.read_csv(self.catalog_path)
 
-    def get_catalog_pecha_names(self):
-        return [row["Pecha ID"] for row in self.catalog]
+    def get_catalog_pecha_ids(self):
+        return self.catalog["Pecha ID"].to_list()
 
-    def load_pechas(self, pecha_ids=None):
+    def load_pechas(self, pecha_ids=None, path: Optional[Path] = None):
+        """if pecha_ids is None, load all pechas in catalog"""
+        """provide the folder path where pechas are located"""
         if pecha_ids is None:
             pecha_ids = self.pecha_ids
-        self.pechas = (self.load_pecha(pecha_id) for pecha_id in pecha_ids)
+        self.pechas = (self.load_pecha(pecha_id, path) for pecha_id in pecha_ids)
 
-    def load_pecha(self, pecha_id):
-        return OpenPechaGitRepo(pecha_id=pecha_id)
+    def load_pecha(self, pecha_id, path=None):
+        if path is None:
+            pecha_path = None
+        else:
+            pecha_path = str(path / pecha_id)
+        return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
     def generate_folder_structure_report(self):
         output_file = self.base_path / "folder_structure.csv"
@@ -90,29 +93,37 @@ class Cataloger:
 
             write_to_csv(output_file, keys, [curr_row])
 
-    def generate_meta_data_report(self):
+    def generate_meta_data_report(self) -> DataFrame:
         keys = OrderedSet()
-        temp_data = []
-        output_file = self.base_path / "meta_data.csv"
+        all_data = []
 
         for pecha in self.pechas:
             """meta already defined in openpecha toolkit"""
             predefined_metadata = OrderedDict(vars(pecha.meta))
+            predefined_metadata = process_metadata_for_enum_names(predefined_metadata)
             """meta from .opf/meta.yml"""
             metadata = OrderedDict(get_meta_data_from_pecha(pecha))
             merged_metadata = merge_two_dictionary(predefined_metadata, metadata)
-            temp_data.append(merged_metadata)
+            all_data.append(merged_metadata)
 
             # Check if there are any new keys
             new_keys = OrderedSet(predefined_metadata.keys()) - keys
             if new_keys:
                 keys.update(new_keys)
-                rewrite_csv(output_file, keys, temp_data)
-                temp_data = []
 
-        # Final write if not already done
-        if temp_data:
-            write_to_csv(output_file, keys, temp_data)
+        # Creating DataFrame
+        df = pd.DataFrame(all_data, columns=keys)
+        return df
+
+
+def process_metadata_for_enum_names(metadata: OrderedDict) -> OrderedDict:
+    processed_metadata = OrderedDict()
+    for key, value in metadata.items():
+        if isinstance(value, Enum):
+            processed_metadata[key] = value.name
+        else:
+            processed_metadata[key] = value
+    return processed_metadata
 
 
 def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
@@ -149,6 +160,9 @@ def get_unenumed_layer_names_from_pecha(
 
 
 if __name__ == "__main__":
-    cataloger = Cataloger(GITHUB_TOKEN)
-    cataloger.load_pechas(["P000216", "I1A92E2D9", "P000217", "O869F9D37"])
-    cataloger.generate_folder_structure_report()
+    cataloger = Cataloger()
+    github_token = ""
+    cataloger.get_catalog(github_token)
+    cataloger.load_pechas(["P000216", "P000217"])
+    df = cataloger.generate_meta_data_report()
+    df.to_csv(CATALOG_DIR / "meta_data.csv")

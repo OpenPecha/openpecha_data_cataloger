@@ -7,8 +7,6 @@ import requests
 import yaml
 from github import Github
 
-from openpecha_data_cataloger.github_token import GITHUB_TOKEN
-
 
 def load_yaml(fn: Path) -> None:
     # use yaml.CSafeLoader / if available but don't crash if it isn't
@@ -138,7 +136,3 @@ def write_to_csv(output_file, keys, data):
         writer = csv.DictWriter(file, fieldnames=keys)
         for row in data:
             writer.writerow({key: row.get(key, None) for key in keys})
-
-
-if __name__ == "__main__":
-    write_repos_to_file("OpenPecha-Data", GITHUB_TOKEN, "repos.txt")
