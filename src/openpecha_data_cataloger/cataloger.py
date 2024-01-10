@@ -1,10 +1,12 @@
 from collections import OrderedDict
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
+from pandas import DataFrame
 
 from openpecha_data_cataloger.config import CATALOG_DIR, set_environment
 from openpecha_data_cataloger.github_token import GITHUB_TOKEN
@@ -12,8 +14,6 @@ from openpecha_data_cataloger.utility import (
     download_github_file,
     load_yaml,
     merge_two_dictionary,
-    rewrite_csv,
-    write_to_csv,
 )
 
 
@@ -55,32 +55,43 @@ class Cataloger:
         self.pechas = (self.load_pecha(pecha_id, path) for pecha_id in pecha_ids)
 
     def load_pecha(self, pecha_id, path=None):
-        return OpenPechaGitRepo(pecha_id=pecha_id, path=str(path / pecha_id))
+        if path is None:
+            pecha_path = None
+        else:
+            pecha_path = str(path / pecha_id)
+        return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
-    def generate_meta_data_report(self, output_file_path: Optional[Path] = None):
+    def generate_meta_data_report(self) -> DataFrame:
         keys = OrderedSet()
-        temp_data = []
-        if output_file_path is None:
-            output_file_path = self.base_path / "meta_data.csv"
+        all_data = []
 
         for pecha in self.pechas:
             """meta already defined in openpecha toolkit"""
             predefined_metadata = OrderedDict(vars(pecha.meta))
+            predefined_metadata = process_metadata_for_enum_names(predefined_metadata)
             """meta from .opf/meta.yml"""
             metadata = OrderedDict(get_meta_data_from_pecha(pecha))
             merged_metadata = merge_two_dictionary(predefined_metadata, metadata)
-            temp_data.append(merged_metadata)
+            all_data.append(merged_metadata)
 
             # Check if there are any new keys
             new_keys = OrderedSet(predefined_metadata.keys()) - keys
             if new_keys:
                 keys.update(new_keys)
-                rewrite_csv(output_file_path, keys, temp_data)
-                temp_data = []
 
-        # Final write if not already done
-        if temp_data:
-            write_to_csv(output_file_path, keys, temp_data)
+        # Creating DataFrame
+        df = pd.DataFrame(all_data, columns=keys)
+        return df
+
+
+def process_metadata_for_enum_names(metadata: OrderedDict) -> OrderedDict:
+    processed_metadata = OrderedDict()
+    for key, value in metadata.items():
+        if isinstance(value, Enum):
+            processed_metadata[key] = value.name
+        else:
+            processed_metadata[key] = value
+    return processed_metadata
 
 
 def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
@@ -92,4 +103,5 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
 if __name__ == "__main__":
     cataloger = Cataloger(GITHUB_TOKEN)
     cataloger.load_pechas(["P000216", "P000217"])
-    print(cataloger.catalog)
+    df = cataloger.generate_meta_data_report()
+    df.to_csv(CATALOG_DIR / "meta_data.csv")
