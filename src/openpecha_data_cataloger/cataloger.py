@@ -22,24 +22,22 @@ class Cataloger:
     repo = "catalog"
     file_name = "opf_catalog.csv"
 
-    def __init__(self, token: str):
-        self.token = token
+    def __init__(self):
         self.base_path = CATALOG_DIR
         self.catalog_path = self.base_path / self.file_name
-        self.get_catalog()
-        self.catalog = self.load_catalog()
-        self.pecha_ids = self.get_catalog_pecha_ids()
         set_environment()
 
-    def get_catalog(self):
+    def get_catalog(self, token: str):
         if not self.catalog_path.exists():
             download_github_file(
-                token=self.token,
+                token=token,
                 org=self.org,
                 repo_name=self.repo,
                 file=self.file_name,
                 destination_folder_path=self.catalog_path.parent,
             )
+        self.catalog = self.load_catalog()
+        self.pecha_ids = self.get_catalog_pecha_ids()
 
     def load_catalog(self):
         return pd.read_csv(self.catalog_path)
@@ -101,7 +99,8 @@ def get_meta_data_from_pecha(pecha: OpenPechaGitRepo):
 
 
 if __name__ == "__main__":
-    cataloger = Cataloger(GITHUB_TOKEN)
+    cataloger = Cataloger()
+    cataloger.get_catalog(GITHUB_TOKEN)
     cataloger.load_pechas(["P000216", "P000217"])
     df = cataloger.generate_meta_data_report()
     df.to_csv(CATALOG_DIR / "meta_data.csv")

@@ -1,13 +1,10 @@
 from config import PECHAS_DIR
 
 from openpecha_data_cataloger.cataloger import Cataloger
-from openpecha_data_cataloger.config import set_environment
-from openpecha_data_cataloger.github_token import GITHUB_TOKEN
 
 
 def test_meta_data_report_generator():
-    set_environment()
-    cataloger = Cataloger(GITHUB_TOKEN)
+    cataloger = Cataloger()
     cataloger.load_pechas(["P000216"], path=PECHAS_DIR)
 
     catalog_df = cataloger.generate_meta_data_report()
@@ -45,3 +42,6 @@ def test_meta_data_report_generator():
     expected_tibetan_collection = "ལེགས་བཤད་གླིང་རིགས་པའི་གཞུང་ལུགས།–  དེབ། ༥༩ – ༡"
     assert P000216_web_metadata["collection"]["en"] == expected_english_collection
     assert P000216_web_metadata["collection"]["bo"] == expected_tibetan_collection
+
+
+test_meta_data_report_generator()
