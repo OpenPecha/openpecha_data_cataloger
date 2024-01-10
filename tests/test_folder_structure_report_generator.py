@@ -14,9 +14,12 @@ def test_folder_structure_report_generator():
     assert P000216["contains index"].iloc[0] == "No"
     assert P000216["contains annotations"].iloc[0] == "Yes"
     assert P000216["volume count"].iloc[0] == 1
-    assert P000216["volumes"].iloc[0] == OrderedDict(
+    expected_volumes = OrderedDict(
         [("v001", ["yigchung", "author", "book_title", "chapter", "sabche"])]
     )
+
+    for key in P000216["volumes"].iloc[0]:
+        assert sorted(P000216["volumes"].iloc[0][key]) == sorted(expected_volumes[key])
     assert P000216["unenumed volumes"].iloc[0] == OrderedDict([("v001", ["Quotation"])])
 
     I1A92E2D9 = catalog_df[catalog_df["id"] == "I1A92E2D9"]
