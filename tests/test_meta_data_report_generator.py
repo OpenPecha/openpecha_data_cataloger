@@ -42,6 +42,3 @@ def test_meta_data_report_generator():
     expected_tibetan_collection = "ལེགས་བཤད་གླིང་རིགས་པའི་གཞུང་ལུགས།–  དེབ། ༥༩ – ༡"
     assert P000216_web_metadata["collection"]["en"] == expected_english_collection
     assert P000216_web_metadata["collection"]["bo"] == expected_tibetan_collection
-
-
-test_meta_data_report_generator()

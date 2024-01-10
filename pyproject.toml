@@ -21,6 +21,8 @@ dependencies = [
   "openpecha>=0.11.9",
   "requests >= 2.31.0",
   "PyGithub >= 1.59.1",
+  "pandas >= 2.1.4",
+  "ordered-set >= 4.1.0",
 ]
 
 [project.optional-dependencies]
