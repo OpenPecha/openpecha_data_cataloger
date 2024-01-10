@@ -14,8 +14,6 @@ from openpecha_data_cataloger.utility import (
     download_github_file,
     load_yaml,
     merge_two_dictionary,
-    write_header_to_csv,
-    write_to_csv,
 )
 
 
@@ -56,13 +54,12 @@ class Cataloger:
 
     def load_pecha(self, pecha_id, path=None):
         if path is None:
-            pecha_path = None
-        else:
-            pecha_path = str(path / pecha_id)
+            return OpenPechaGitRepo(pecha_id=pecha_id)
+
+        pecha_path = str(path / pecha_id)
         return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
     def generate_folder_structure_report(self):
-        output_file = self.base_path / "folder_structure.csv"
         keys = OrderedSet(
             [
                 "Pecha ID",
@@ -73,11 +70,13 @@ class Cataloger:
                 "unenumed volumes",
             ]
         )
-        write_header_to_csv(output_file, keys)
+        all_data = []
+
         for pecha in self.pechas:
             curr_row = OrderedDict()
             curr_row["Pecha ID"] = pecha.pecha_id
             curr_row["contains index"] = "Yes" if pecha.index else "No"
+
             try:
                 curr_row["contains annotations"] = "Yes" if pecha.components else "No"
                 curr_row["volume counts"] = len(pecha.components)
@@ -91,7 +90,11 @@ class Cataloger:
                 curr_row["volumes"] = None
                 curr_row["unenumed volumes"] = None
 
-            write_to_csv(output_file, keys, [curr_row])
+            all_data.append(curr_row)
+
+        # Convert the list of OrderedDict to a Pandas DataFrame
+        df = pd.DataFrame(all_data, columns=keys)
+        return df
 
     def generate_meta_data_report(self) -> DataFrame:
         keys = OrderedSet()
@@ -161,8 +164,6 @@ def get_unenumed_layer_names_from_pecha(
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    github_token = ""
-    cataloger.get_catalog(github_token)
-    cataloger.load_pechas(["P000216", "P000217"])
-    df = cataloger.generate_meta_data_report()
-    df.to_csv(CATALOG_DIR / "meta_data.csv")
+    cataloger.load_pechas(pecha_ids=["P000216", "P000217"])
+    df = cataloger.generate_folder_structure_report()
+    df.to_csv(CATALOG_DIR / "folder_structure_data.csv")

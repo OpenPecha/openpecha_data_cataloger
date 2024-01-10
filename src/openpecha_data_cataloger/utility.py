@@ -1,4 +1,3 @@
-import csv
 import time
 from datetime import datetime
 from pathlib import Path
@@ -22,16 +21,6 @@ def merge_two_dictionary(dict1, dict2):
         if key not in dict1:
             dict1[key] = value
     return dict1
-
-
-def get_org_repos(org_name, token):
-    org_repos = []
-    g = Github(token)
-    org = g.get_organization(org_name)
-    repos = org.get_repos()
-    for repo in repos:
-        org_repos.append(repo.name)
-    return org_repos
 
 
 def get_all_repos(org_name, token):
@@ -83,7 +72,7 @@ def get_all_repos(org_name, token):
 
 
 def write_repos_to_file(org: str, token: str, file_name: str):
-    repos = get_org_repos(org, token)
+    repos = get_all_repos(org, token)
     with open(file_name, "w") as file:
         for repo in repos:
             file.write(repo.name + "\n")
@@ -115,24 +104,3 @@ def download_file(url: str, destination_folder_path: Path):
         print(f"file downloaded: {destination_folder_path.name}")
     else:
         print(f"Failed to download: {response.status_code}")
-
-
-def rewrite_csv(output_file, keys, data):
-    with open(output_file, "w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=keys)
-        writer.writeheader()
-        for row in data:
-            writer.writerow({key: row.get(key, None) for key in keys})
-
-
-def write_header_to_csv(output_file, keys):
-    with open(output_file, "w", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=keys)
-        writer.writeheader()
-
-
-def write_to_csv(output_file, keys, data):
-    with open(output_file, "a", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=keys)
-        for row in data:
-            writer.writerow({key: row.get(key, None) for key in keys})
