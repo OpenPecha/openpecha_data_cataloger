@@ -4,13 +4,15 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-from openpecha.core.layer import LayerEnum
+from openpecha.config import PECHAS_PATH
 from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
 from pandas import DataFrame
 
 from openpecha_data_cataloger.config import (
+    ALL_LAYERS_ENUM_VALUES,
     ANNOTATION_CONTENT_KEYS,
+    BASE_ANNOTATION_FEATURES,
     CATALOG_DIR,
     FOLDER_STRUCTURE_KEYS,
     set_environment,
@@ -20,8 +22,6 @@ from openpecha_data_cataloger.utility import (
     load_yaml,
     merge_two_dictionary,
 )
-
-BASE_ANNOTATION_FEATURES = ["id", "annotation_type", "revision", "annotations"]
 
 
 class Cataloger:
@@ -61,6 +61,8 @@ class Cataloger:
 
     def load_pecha(self, pecha_id, path=None):
         if path is None:
+            if Path(PECHAS_PATH / pecha_id).exists():
+                return OpenPechaGitRepo(pecha_id=pecha_id, path=PECHAS_PATH / pecha_id)
             return OpenPechaGitRepo(pecha_id=pecha_id)
 
         pecha_path = str(path / pecha_id)
@@ -113,13 +115,26 @@ class Cataloger:
             if annotation_content:
                 curr_row.update(
                     {
-                        "layer name": annotation_content["annotation_type"],
-                        "is layer enumed": "Yes" if is_layer_enumed else "No",
+                        "annotation file name": annotation_content["annotation_type"],
+                        "is annotation file name enumed": "Yes"
+                        if is_layer_enumed
+                        else "No",
                         "base fields": list(annotation_content.keys()),
                         "undefined base fields": list(
                             set(annotation_content.keys())
                             - set(BASE_ANNOTATION_FEATURES)
                         ),
+                        "has annotation_type": "Yes"
+                        if "annotation_type" in annotation_content
+                        else "No",
+                        "annotation_type": annotation_content["annotation_type"]
+                        if "annotation_type" in annotation_content
+                        else None,
+                        "is annotation_type enumed": "Yes"
+                        if "annotation_type" in annotation_content
+                        and annotation_content["annotation_type"]
+                        in ALL_LAYERS_ENUM_VALUES
+                        else "No",
                     }
                 )
             return curr_row
@@ -234,17 +249,16 @@ def get_unenumed_layer_names_from_pecha(
         return None
 
     res = OrderedDict()
-    all_layers = {layer.value for layer in LayerEnum}
     for vol_dir in pecha.layers_path.iterdir():
         # Collect layer names where its enum is not in LayerEnum
         res[vol_dir.name] = [
-            fn.stem for fn in vol_dir.iterdir() if fn.stem not in all_layers
+            fn.stem for fn in vol_dir.iterdir() if fn.stem not in ALL_LAYERS_ENUM_VALUES
         ]
     return res
 
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.load_pechas(pecha_ids=["P000216"])
+    cataloger.load_pechas(pecha_ids=["P000216", "P000003"])
     df = cataloger.generate_annotation_content_report()
     df.to_csv(CATALOG_DIR / "annotation_content_report.csv")
