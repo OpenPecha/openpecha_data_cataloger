@@ -66,6 +66,7 @@ class Cataloger:
             [
                 "pecha id",
                 "volume",
+                "has base file",
                 "annotation layer",
                 "base fields",
                 "undefined base fields",
@@ -75,15 +76,24 @@ class Cataloger:
 
         for pecha in self.pechas:
             for volume, layers in pecha.components.items():
+                curr_row = OrderedDict()
                 if volume not in pecha.base_names_list:
+                    curr_row = OrderedDict(
+                        [
+                            ("pecha id", pecha.pecha_id),
+                            ("volume", volume),
+                            ("has base file", "No"),
+                        ]
+                    )
+                    all_data.append(curr_row)
                     continue
                 for layer in layers:
                     annotation_content = pecha.read_layers_file(
                         base_name=volume, layer_name=layer
                     )
-                    curr_row = OrderedDict()
                     curr_row["pecha id"] = pecha.pecha_id
                     curr_row["volume"] = volume
+                    curr_row["has base file"] = "Yes"
                     curr_row["annotation layer"] = annotation_content["annotation_type"]
                     curr_row["base fields"] = list(annotation_content.keys())
                     curr_row["undefined base fields"] = list(
