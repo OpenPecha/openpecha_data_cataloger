@@ -65,9 +65,10 @@ class Cataloger:
         keys = OrderedSet(
             [
                 "pecha id",
-                "volume",
+                "volume name",
                 "has base file",
-                "annotation layer",
+                "layer name",
+                "is layer enumed",
                 "base fields",
                 "undefined base fields",
             ]
@@ -88,18 +89,38 @@ class Cataloger:
                     all_data.append(curr_row)
                     continue
                 for layer in layers:
+                    curr_row = OrderedDict()
                     annotation_content = pecha.read_layers_file(
                         base_name=volume, layer_name=layer
                     )
                     curr_row["pecha id"] = pecha.pecha_id
-                    curr_row["volume"] = volume
+                    curr_row["volume name"] = volume
                     curr_row["has base file"] = "Yes"
-                    curr_row["annotation layer"] = annotation_content["annotation_type"]
+                    curr_row["layer name"] = annotation_content["annotation_type"]
+                    curr_row["is layer enumed"] = "Yes"
                     curr_row["base fields"] = list(annotation_content.keys())
                     curr_row["undefined base fields"] = list(
                         set(annotation_content.keys()) - set(BASE_ANNOTATION_FEATURES)
                     )
                     all_data.append(curr_row)
+                """layer that are not enumed in LayerEnum"""
+                enum_layers = get_unenumed_layer_names_from_pecha(pecha)
+                if enum_layers:
+                    for layer_name in enum_layers[volume]:
+                        curr_row = OrderedDict()
+                        layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
+                        annotation_content = load_yaml(layer_fn)
+                        curr_row["pecha id"] = pecha.pecha_id
+                        curr_row["volume"] = volume
+                        curr_row["has base file"] = "Yes"
+                        curr_row["layer name"] = layer_name
+                        curr_row["is layer enumed"] = "No"
+                        curr_row["base fields"] = list(annotation_content.keys())
+                        curr_row["undefined base fields"] = list(
+                            set(annotation_content.keys())
+                            - set(BASE_ANNOTATION_FEATURES)
+                        )
+                        all_data.append(curr_row)
         # Convert the list of OrderedDict to a Pandas DataFrame
         df = pd.DataFrame(all_data, columns=keys)
         return df

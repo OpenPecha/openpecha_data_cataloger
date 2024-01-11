@@ -7,7 +7,7 @@ import yaml
 from github import Github
 
 
-def load_yaml(fn: Path) -> None:
+def load_yaml(fn: Path):
     # use yaml.CSafeLoader / if available but don't crash if it isn't
     try:
         yaml_loader = yaml.CSafeLoader
