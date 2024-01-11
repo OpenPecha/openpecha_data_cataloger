@@ -74,7 +74,12 @@ class Cataloger:
             for volume, layers in pecha.components.items():
                 if volume not in pecha.base_names_list:
                     pecha_data.append(
-                        create_row(pecha.pecha_id, volume, has_base_file=False)
+                        create_row(
+                            pecha.pecha_id,
+                            volume,
+                            has_base_file=False,
+                            has_annotations=False,
+                        )
                     )
                     continue
 
@@ -82,10 +87,14 @@ class Cataloger:
                     annotation_content = pecha.read_layers_file(
                         base_name=volume, layer_name=layer
                     )
+                    has_annotations = (
+                        "Yes" if "annotations" in annotation_content else "No"
+                    )
                     pecha_data.append(
                         create_row(
                             pecha.pecha_id,
                             volume,
+                            has_annotations,
                             annotation_content,
                             has_base_file=True,
                             is_layer_enumed=True,
@@ -101,6 +110,7 @@ class Cataloger:
         def create_row(
             pecha_id,
             volume,
+            has_annotations,
             annotation_content=None,
             has_base_file=True,
             is_layer_enumed=True,
@@ -113,6 +123,20 @@ class Cataloger:
                 ]
             )
             if annotation_content:
+                has_annotation_type = (
+                    "Yes" if "annotation_type" in annotation_content else "No"
+                )
+                annotation_type = (
+                    annotation_content["annotation_type"]
+                    if has_annotation_type
+                    else None
+                )
+                is_annotation_enumed = (
+                    "Yes"
+                    if annotation_type and annotation_type in ALL_LAYERS_ENUM_VALUES
+                    else "No"
+                )
+
                 curr_row.update(
                     {
                         "annotation file name": annotation_content["annotation_type"],
@@ -124,17 +148,10 @@ class Cataloger:
                             set(annotation_content.keys())
                             - set(BASE_ANNOTATION_FEATURES)
                         ),
-                        "has annotation_type": "Yes"
-                        if "annotation_type" in annotation_content
-                        else "No",
-                        "annotation_type": annotation_content["annotation_type"]
-                        if "annotation_type" in annotation_content
-                        else None,
-                        "is annotation_type enumed": "Yes"
-                        if "annotation_type" in annotation_content
-                        and annotation_content["annotation_type"]
-                        in ALL_LAYERS_ENUM_VALUES
-                        else "No",
+                        "has annotation_type": has_annotation_type,
+                        "annotation_type": annotation_type,
+                        "is annotation_type enumed": is_annotation_enumed,
+                        "has annotations": has_annotations,
                     }
                 )
             return curr_row
@@ -144,10 +161,12 @@ class Cataloger:
             for layer_name in enum_layers[volume]:
                 layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
                 annotation_content = load_yaml(layer_fn)
+                has_annotations = "Yes" if "annotations" in annotation_content else "No"
                 enum_layer_data.append(
                     create_row(
                         pecha.pecha_id,
                         volume,
+                        has_annotations,
                         annotation_content,
                         has_base_file=True,
                         is_layer_enumed=False,
@@ -259,6 +278,6 @@ def get_unenumed_layer_names_from_pecha(
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.load_pechas(pecha_ids=["P000216", "P000003"])
+    cataloger.load_pechas(pecha_ids=["P000216"])
     df = cataloger.generate_annotation_content_report()
     df.to_csv(CATALOG_DIR / "annotation_content_report.csv")

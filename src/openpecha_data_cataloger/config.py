@@ -48,5 +48,6 @@ ANNOTATION_CONTENT_KEYS = OrderedSet(
         "has annotation_type",
         "annotation_type",
         "is annotation_type enumed",
+        "has annotations",
     ]
 )
