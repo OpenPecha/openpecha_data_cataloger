@@ -38,16 +38,16 @@ FOLDER_STRUCTURE_KEYS = OrderedSet(
 )
 ANNOTATION_CONTENT_KEYS = OrderedSet(
     [
-        "pecha id",
-        "volume name",
-        "has base file",
-        "annotation file name",
-        "is annotation file name enumed",
-        "base fields",
-        "undefined base fields",
-        "has annotation_type",
+        "pecha_id",
+        "volume_name",
+        "has_base_file",
+        "annotation_file_name",
+        "is_annotation_file_name_enumed",
+        "base_fields",
+        "undefined_base_fields",
+        "has_annotation_type",
         "annotation_type",
-        "is annotation_type enumed",
-        "has annotations",
+        "is_annotation_type_enumed",
+        "has_annotations",
     ]
 )

@@ -9,10 +9,10 @@ from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
 from pandas import DataFrame
 
+from openpecha_data_cataloger.annotation_cataloger import AnnotationCataloger
 from openpecha_data_cataloger.config import (
     ALL_LAYERS_ENUM_VALUES,
     ANNOTATION_CONTENT_KEYS,
-    BASE_ANNOTATION_FEATURES,
     CATALOG_DIR,
     FOLDER_STRUCTURE_KEYS,
     set_environment,
@@ -69,116 +69,11 @@ class Cataloger:
         return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
     def generate_annotation_content_report(self):
-        def process_pecha(pecha: OpenPechaGitRepo):
-            pecha_data = []
-            for volume, layers in pecha.components.items():
-                if volume not in pecha.base_names_list:
-                    pecha_data.append(
-                        create_row(
-                            pecha.pecha_id,
-                            volume,
-                            has_base_file=False,
-                            has_annotations=False,
-                        )
-                    )
-                    continue
-
-                for layer in layers:
-                    annotation_content = pecha.read_layers_file(
-                        base_name=volume, layer_name=layer
-                    )
-                    has_annotations = (
-                        "Yes" if "annotations" in annotation_content else "No"
-                    )
-                    pecha_data.append(
-                        create_row(
-                            pecha.pecha_id,
-                            volume,
-                            has_annotations,
-                            annotation_content,
-                            has_base_file=True,
-                            is_layer_enumed=True,
-                        )
-                    )
-
-                enum_layers = get_unenumed_layer_names_from_pecha(pecha)
-                if enum_layers and volume in enum_layers:
-                    pecha_data.extend(process_enum_layers(pecha, enum_layers, volume))
-
-            return pecha_data
-
-        def create_row(
-            pecha_id,
-            volume,
-            has_annotations,
-            annotation_content=None,
-            has_base_file=True,
-            is_layer_enumed=True,
-        ):
-            curr_row = OrderedDict(
-                [
-                    ("pecha id", pecha_id),
-                    ("volume name", volume),
-                    ("has base file", "Yes" if has_base_file else "No"),
-                ]
-            )
-            if annotation_content:
-                has_annotation_type = (
-                    "Yes" if "annotation_type" in annotation_content else "No"
-                )
-                annotation_type = (
-                    annotation_content["annotation_type"]
-                    if has_annotation_type
-                    else None
-                )
-                is_annotation_enumed = (
-                    "Yes"
-                    if annotation_type and annotation_type in ALL_LAYERS_ENUM_VALUES
-                    else "No"
-                )
-
-                curr_row.update(
-                    {
-                        "annotation file name": annotation_content["annotation_type"],
-                        "is annotation file name enumed": "Yes"
-                        if is_layer_enumed
-                        else "No",
-                        "base fields": list(annotation_content.keys()),
-                        "undefined base fields": list(
-                            set(annotation_content.keys())
-                            - set(BASE_ANNOTATION_FEATURES)
-                        ),
-                        "has annotation_type": has_annotation_type,
-                        "annotation_type": annotation_type,
-                        "is annotation_type enumed": is_annotation_enumed,
-                        "has annotations": has_annotations,
-                    }
-                )
-            return curr_row
-
-        def process_enum_layers(pecha, enum_layers, volume):
-            enum_layer_data = []
-            for layer_name in enum_layers[volume]:
-                layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
-                annotation_content = load_yaml(layer_fn)
-                has_annotations = "Yes" if "annotations" in annotation_content else "No"
-                enum_layer_data.append(
-                    create_row(
-                        pecha.pecha_id,
-                        volume,
-                        has_annotations,
-                        annotation_content,
-                        has_base_file=True,
-                        is_layer_enumed=False,
-                    )
-                )
-            return enum_layer_data
-
         keys = ANNOTATION_CONTENT_KEYS
         all_data = []
 
         for pecha in self.pechas:
-            all_data.extend(process_pecha(pecha))
+            all_data.extend(process_pecha_for_annotation_content_report(pecha))
 
         df = pd.DataFrame(all_data, columns=keys)
         return df
@@ -235,6 +130,7 @@ class Cataloger:
 
 
 def process_metadata_for_enum_names(metadata: OrderedDict) -> OrderedDict:
+    """Convert Enum values to Enum names in metadata"""
     processed_metadata = OrderedDict()
     for key, value in metadata.items():
         if isinstance(value, Enum):
@@ -274,6 +170,69 @@ def get_unenumed_layer_names_from_pecha(
             fn.stem for fn in vol_dir.iterdir() if fn.stem not in ALL_LAYERS_ENUM_VALUES
         ]
     return res
+
+
+def process_pecha_for_annotation_content_report(pecha: OpenPechaGitRepo) -> list:
+    """Process pecha for annotation content report"""
+    """1. Pecha with not base file"""
+    """2. Pecha with base file with enumed annotation file"""
+    """3. Pecha with base file with annotation file"""
+
+    pecha_data = []
+    for volume, layers in pecha.components.items():
+        if volume not in pecha.base_names_list:
+            pecha_data.append(
+                create_row_for_annotation_content_report(
+                    AnnotationCataloger(pecha.pecha_id, volume)
+                )
+            )
+            continue
+        for layer in layers:
+            annotation_content = pecha.read_layers_file(
+                base_name=volume, layer_name=layer
+            )
+            pecha_data.append(
+                create_row_for_annotation_content_report(
+                    AnnotationCataloger(
+                        pecha.pecha_id, volume, annotation_content, layer
+                    )
+                )
+            )
+        unenumed_layers = get_unenumed_layer_names_from_pecha(pecha)
+        if unenumed_layers:
+            pecha_data.extend(
+                process_unenumed_layers_for_annotation_content_report(
+                    pecha, unenumed_layers, volume
+                )
+            )
+
+    return pecha_data
+
+
+def create_row_for_annotation_content_report(
+    annotation_cataloger: AnnotationCataloger,
+) -> OrderedDict:
+    """Create a dictionary with fields from AnnotationCataloger object"""
+    curr_row = OrderedDict()
+    for key in ANNOTATION_CONTENT_KEYS:
+        curr_row[key] = getattr(annotation_cataloger, key, None)
+    return curr_row
+
+
+def process_unenumed_layers_for_annotation_content_report(
+    pecha, unenumed_layers, volume
+) -> list:
+    """Process pecha that has"""
+    unenumed_layer_data = []
+    for layer_name in unenumed_layers[volume]:
+        layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
+        annotation_content = load_yaml(layer_fn)
+        unenumed_layer_data.append(
+            create_row_for_annotation_content_report(
+                AnnotationCataloger(pecha.pecha_id, volume, annotation_content)
+            )
+        )
+    return unenumed_layer_data
 
 
 if __name__ == "__main__":
