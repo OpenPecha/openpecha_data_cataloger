@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from ordered_set import OrderedSet
+
 
 def _mkdir(path):
     if path.is_dir():
@@ -18,3 +20,26 @@ def set_environment():
 
 ROOT_DIR = Path(__file__).parent.parent.parent
 CATALOG_DIR = _mkdir(ROOT_DIR / ".catalog")
+
+
+FOLDER_STRUCTURE_KEYS = OrderedSet(
+    [
+        "id",
+        "contains index",
+        "contains annotations",
+        "volume count",
+        "volumes",
+        "unenumed volumes",
+    ]
+)
+ANNOTATION_CONTENT_KEYS = OrderedSet(
+    [
+        "pecha id",
+        "volume name",
+        "has base file",
+        "layer name",
+        "is layer enumed",
+        "base fields",
+        "undefined base fields",
+    ]
+)

@@ -9,7 +9,12 @@ from openpecha.core.pecha import OpenPechaGitRepo
 from ordered_set import OrderedSet
 from pandas import DataFrame
 
-from openpecha_data_cataloger.config import CATALOG_DIR, set_environment
+from openpecha_data_cataloger.config import (
+    ANNOTATION_CONTENT_KEYS,
+    CATALOG_DIR,
+    FOLDER_STRUCTURE_KEYS,
+    set_environment,
+)
 from openpecha_data_cataloger.utility import (
     download_github_file,
     load_yaml,
@@ -62,80 +67,90 @@ class Cataloger:
         return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
     def generate_annotation_content_report(self):
-        keys = OrderedSet(
-            [
-                "pecha id",
-                "volume name",
-                "has base file",
-                "layer name",
-                "is layer enumed",
-                "base fields",
-                "undefined base fields",
-            ]
-        )
-        all_data = []
-
-        for pecha in self.pechas:
+        def process_pecha(pecha: OpenPechaGitRepo):
+            pecha_data = []
             for volume, layers in pecha.components.items():
-                curr_row = OrderedDict()
                 if volume not in pecha.base_names_list:
-                    curr_row = OrderedDict(
-                        [
-                            ("pecha id", pecha.pecha_id),
-                            ("volume", volume),
-                            ("has base file", "No"),
-                        ]
+                    pecha_data.append(
+                        create_row(pecha.pecha_id, volume, has_base_file=False)
                     )
-                    all_data.append(curr_row)
                     continue
+
                 for layer in layers:
-                    curr_row = OrderedDict()
                     annotation_content = pecha.read_layers_file(
                         base_name=volume, layer_name=layer
                     )
-                    curr_row["pecha id"] = pecha.pecha_id
-                    curr_row["volume name"] = volume
-                    curr_row["has base file"] = "Yes"
-                    curr_row["layer name"] = annotation_content["annotation_type"]
-                    curr_row["is layer enumed"] = "Yes"
-                    curr_row["base fields"] = list(annotation_content.keys())
-                    curr_row["undefined base fields"] = list(
-                        set(annotation_content.keys()) - set(BASE_ANNOTATION_FEATURES)
+                    pecha_data.append(
+                        create_row(
+                            pecha.pecha_id,
+                            volume,
+                            annotation_content,
+                            has_base_file=True,
+                            is_layer_enumed=True,
+                        )
                     )
-                    all_data.append(curr_row)
-                """layer that are not enumed in LayerEnum"""
+
                 enum_layers = get_unenumed_layer_names_from_pecha(pecha)
-                if enum_layers:
-                    for layer_name in enum_layers[volume]:
-                        curr_row = OrderedDict()
-                        layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
-                        annotation_content = load_yaml(layer_fn)
-                        curr_row["pecha id"] = pecha.pecha_id
-                        curr_row["volume"] = volume
-                        curr_row["has base file"] = "Yes"
-                        curr_row["layer name"] = layer_name
-                        curr_row["is layer enumed"] = "No"
-                        curr_row["base fields"] = list(annotation_content.keys())
-                        curr_row["undefined base fields"] = list(
+                if enum_layers and volume in enum_layers:
+                    pecha_data.extend(process_enum_layers(pecha, enum_layers, volume))
+
+            return pecha_data
+
+        def create_row(
+            pecha_id,
+            volume,
+            annotation_content=None,
+            has_base_file=True,
+            is_layer_enumed=True,
+        ):
+            curr_row = OrderedDict(
+                [
+                    ("pecha id", pecha_id),
+                    ("volume name", volume),
+                    ("has base file", "Yes" if has_base_file else "No"),
+                ]
+            )
+            if annotation_content:
+                curr_row.update(
+                    {
+                        "layer name": annotation_content["annotation_type"],
+                        "is layer enumed": "Yes" if is_layer_enumed else "No",
+                        "base fields": list(annotation_content.keys()),
+                        "undefined base fields": list(
                             set(annotation_content.keys())
                             - set(BASE_ANNOTATION_FEATURES)
-                        )
-                        all_data.append(curr_row)
-        # Convert the list of OrderedDict to a Pandas DataFrame
+                        ),
+                    }
+                )
+            return curr_row
+
+        def process_enum_layers(pecha, enum_layers, volume):
+            enum_layer_data = []
+            for layer_name in enum_layers[volume]:
+                layer_fn = pecha.layers_path / volume / f"{layer_name}.yml"
+                annotation_content = load_yaml(layer_fn)
+                enum_layer_data.append(
+                    create_row(
+                        pecha.pecha_id,
+                        volume,
+                        annotation_content,
+                        has_base_file=True,
+                        is_layer_enumed=False,
+                    )
+                )
+            return enum_layer_data
+
+        keys = ANNOTATION_CONTENT_KEYS
+        all_data = []
+
+        for pecha in self.pechas:
+            all_data.extend(process_pecha(pecha))
+
         df = pd.DataFrame(all_data, columns=keys)
         return df
 
     def generate_folder_structure_report(self):
-        keys = OrderedSet(
-            [
-                "id",
-                "contains index",
-                "contains annotations",
-                "volume count",
-                "volumes",
-                "unenumed volumes",
-            ]
-        )
+        keys = FOLDER_STRUCTURE_KEYS
         all_data = []
 
         for pecha in self.pechas:
