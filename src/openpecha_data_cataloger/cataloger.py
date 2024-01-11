@@ -16,6 +16,8 @@ from openpecha_data_cataloger.utility import (
     merge_two_dictionary,
 )
 
+BASE_ANNOTATION_FEATURES = ["id", "annotation_type", "revision", "annotations"]
+
 
 class Cataloger:
     org = "OpenPecha-Data"
@@ -65,7 +67,8 @@ class Cataloger:
                 "pecha id",
                 "volume",
                 "annotation layer",
-                "base annotation features",
+                "base fields",
+                "undefined base fields",
             ]
         )
         all_data = []
@@ -82,8 +85,9 @@ class Cataloger:
                     curr_row["pecha id"] = pecha.pecha_id
                     curr_row["volume"] = volume
                     curr_row["annotation layer"] = annotation_content["annotation_type"]
-                    curr_row["base annotation features"] = list(
-                        annotation_content.keys()
+                    curr_row["base fields"] = list(annotation_content.keys())
+                    curr_row["undefined base fields"] = list(
+                        set(annotation_content.keys()) - set(BASE_ANNOTATION_FEATURES)
                     )
                     all_data.append(curr_row)
         # Convert the list of OrderedDict to a Pandas DataFrame
