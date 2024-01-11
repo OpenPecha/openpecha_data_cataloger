@@ -59,6 +59,37 @@ class Cataloger:
         pecha_path = str(path / pecha_id)
         return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
 
+    def generate_annotation_content_report(self):
+        keys = OrderedSet(
+            [
+                "pecha id",
+                "volume",
+                "annotation layer",
+                "base annotation features",
+            ]
+        )
+        all_data = []
+
+        for pecha in self.pechas:
+            for volume, layers in pecha.components.items():
+                if volume not in pecha.base_names_list:
+                    continue
+                for layer in layers:
+                    annotation_content = pecha.read_layers_file(
+                        base_name=volume, layer_name=layer
+                    )
+                    curr_row = OrderedDict()
+                    curr_row["pecha id"] = pecha.pecha_id
+                    curr_row["volume"] = volume
+                    curr_row["annotation layer"] = annotation_content["annotation_type"]
+                    curr_row["base annotation features"] = list(
+                        annotation_content.keys()
+                    )
+                    all_data.append(curr_row)
+        # Convert the list of OrderedDict to a Pandas DataFrame
+        df = pd.DataFrame(all_data, columns=keys)
+        return df
+
     def generate_folder_structure_report(self):
         keys = OrderedSet(
             [
@@ -164,6 +195,6 @@ def get_unenumed_layer_names_from_pecha(
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.load_pechas(pecha_ids=["P000216", "I1A92E2D9", "O869F9D37"])
-    df = cataloger.generate_folder_structure_report()
-    df.to_csv(CATALOG_DIR / "folder_structure_data.csv")
+    cataloger.load_pechas(pecha_ids=["P000216"])
+    df = cataloger.generate_annotation_content_report()
+    df.to_csv(CATALOG_DIR / "annotation_content_report.csv")
