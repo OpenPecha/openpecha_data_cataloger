@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from openpecha.core.layer import LayerEnum, _get_annotation_class
 
@@ -23,6 +23,8 @@ class AnnotationCataloger:
     annotation_type: Optional[str] = None
     is_annotation_type_enumed: Optional[bool] = False
     has_annotations: Optional[bool] = None
+    """'annotations' not included in the report"""
+    annotations: Optional[Dict] = field(default_factory=dict)
     """check if annotations is a list of dict or dict of dict"""
     has_annotation_id_missing: Optional[bool] = False
     annotation_fields: List = field(default_factory=list)
@@ -32,6 +34,7 @@ class AnnotationCataloger:
     extra_annotation_fields: List = field(default_factory=list)
     has_span_annotation: Optional[bool] = False
     has_start_end_in_span: Optional[bool] = False
+    start_greater_equal_than_end: Dict = field(default_factory=dict)
 
     def __init__(
         self,
@@ -85,17 +88,16 @@ class AnnotationCataloger:
             return
         self.has_annotations = True
         annotations = self.annotation_content["annotations"]
-        self.process_annotation_data(annotations)
-
-    def process_annotation_data(self, annotations):
         if isinstance(annotations, list):
-            self.has_annotation_id_missing = True
-            annotations = merge_list_of_dicts(annotations)
-        if isinstance(annotations, dict):
-            self.analyze_annotation_fields(annotations)
+            self.annotations = merge_list_of_dicts(annotations)
+        else:
+            self.annotations = annotations
+        self.analyze_annotation_fields()
 
-    def analyze_annotation_fields(self, annotations):
-        first_annotation = next(iter(annotations.values()), None)
+    def analyze_annotation_fields(self):
+        if self.annotations is None:
+            return
+        first_annotation = next(iter(self.annotations.values()))
         self.process_span_annotation(first_annotation)
         if first_annotation:
             self.annotation_fields = list(first_annotation.keys())
@@ -109,6 +111,16 @@ class AnnotationCataloger:
         if self.has_span_annotation:
             if "start" in annotation["span"] and "end" in annotation["span"]:
                 self.has_start_end_in_span = True
+                self.analyze_start_end_in_annotation_spans()
+
+    def analyze_start_end_in_annotation_spans(self):
+        if self.annotations is None:
+            return
+        self.start_greater_equal_than_end = {}
+        for annotation_id, annotation in self.annotations.items():
+            if "start" in annotation["span"] and "end" in annotation["span"]:
+                if annotation["span"]["start"] >= annotation["span"]["end"]:
+                    self.start_greater_equal_than_end[annotation_id] = annotation
 
     def compare_with_required_fields(self):
         base_class = _get_annotation_class(self.layer)
