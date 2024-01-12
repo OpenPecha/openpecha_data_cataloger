@@ -51,5 +51,6 @@ ANNOTATION_CONTENT_KEYS = OrderedSet(
         "has_annotations",
         "has_annotation_id_missing",
         "annotation_fields",
+        "required_annotation_fields",
     ]
 )

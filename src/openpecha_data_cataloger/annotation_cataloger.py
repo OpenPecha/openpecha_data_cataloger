@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from openpecha.core.layer import LayerEnum
+from openpecha.core.layer import LayerEnum, _get_annotation_class
 
 from openpecha_data_cataloger.config import (
     ALL_LAYERS_ENUM_VALUES,
@@ -26,6 +26,8 @@ class AnnotationCataloger:
     """check if annotations is a list of dict or dict of dict"""
     has_annotation_id_missing: Optional[bool] = False
     annotation_fields: List = field(default_factory=list)
+    """from using _get_annotation_class"""
+    required_annotation_fields: List = field(default_factory=list)
 
     def __init__(
         self,
@@ -73,6 +75,14 @@ class AnnotationCataloger:
                 annotation = next(iter(annotations.values()), None)
                 if annotation is not None:
                     self.annotation_fields = list(annotation.keys())
+                if self.layer:
+                    base_class = _get_annotation_class(self.layer)
+                    fields = base_class.__fields__
+                    self.required_annotation_fields = [
+                        field_name
+                        for field_name, field_info in fields.items()
+                        if field_info.required
+                    ]
 
 
 def merge_list_of_dicts(list_of_dicts: List[dict]) -> dict:
