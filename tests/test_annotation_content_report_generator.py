@@ -5,9 +5,10 @@ from openpecha_data_cataloger.cataloger import Cataloger
 
 def test_annotation_content_report_generator():
     cataloger = Cataloger()
-    cataloger.load_pechas(["P000216", "I1A92E2D9"], path=PECHAS_DIR)
+    cataloger.load_pechas(["P000216", "I1A92E2D9", "P000003"], path=PECHAS_DIR)
 
     catalog_df = cataloger.generate_annotation_content_report()
+    catalog_df.to_csv("test.csv")
 
     # Function to test a specific pecha, volume, and annotation file
     def test_specific_annotation(
@@ -81,8 +82,22 @@ def test_annotation_content_report_generator():
         "has_annotation_id_missing": False,
     }
 
+    expected_P000003_res = {
+        "has_base_file": True,
+        "is_annotation_file_name_enumed": False,
+        "base_fields": ["id", "annotation_type", "rev", "content"],
+        "undefined_base_fields": ["rev", "content"],
+        "annotation_type": "pagination",
+        "is_annotation_type_enumed": False,
+        "has_annotations": False,
+    }
+
     # Run the tests
     test_specific_annotation("P000216", "v001", "Yigchung", expected_yigchung)
     test_specific_annotation("P000216", "v001", "Author", expected_author)
     test_specific_annotation("P000216", "v001", "Quotation", expected_quotation)
     test_specific_annotation("I1A92E2D9", "ABFB", "Segment", expected_segment)
+    test_specific_annotation("P000003", "v001", "pagination", expected_P000003_res)
+
+
+test_annotation_content_report_generator()

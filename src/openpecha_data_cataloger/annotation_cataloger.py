@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from openpecha.core.layer import LayerEnum, _get_annotation_class
+from ordered_set import OrderedSet
 
 from openpecha_data_cataloger.config import (
     ALL_LAYERS_ENUM_VALUES,
@@ -21,7 +22,7 @@ class AnnotationCataloger:
     has_annotation_type: Optional[bool] = False
     annotation_type: Optional[str] = None
     is_annotation_type_enumed: Optional[bool] = False
-    has_annotations: Optional[bool] = None
+    has_annotations: Optional[bool] = False
     """'annotations'and 'base file length' not included in the report"""
     base_file_length: int = -1
     annotations: Optional[Dict] = field(default_factory=dict)
@@ -69,7 +70,7 @@ class AnnotationCataloger:
         self.has_base_file = True
         self.base_fields = list(self.annotation_content.keys())
         self.undefined_base_fields = list(
-            set(self.base_fields) - set(BASE_ANNOTATION_FEATURES)
+            OrderedSet(self.base_fields) - OrderedSet(BASE_ANNOTATION_FEATURES)
         )
         self.process_annotation_type()
         self.process_annotations()

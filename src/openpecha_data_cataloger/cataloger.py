@@ -175,6 +175,21 @@ def get_unenumed_layer_names_from_pecha(
     return res
 
 
+def get_unenumed_layer_names_from_pecha_volume(
+    pecha: OpenPechaGitRepo, volume: str
+) -> Optional[OrderedDict]:
+    """Get all unenumerated layer names from a specified volume in an OpenPechaGitRepo object."""
+    volume_path = pecha.layers_path / volume
+    if not volume_path.exists() or not volume_path.is_dir():
+        return None
+
+    unenumed_layers = OrderedDict()
+    unenumed_layers[volume] = [
+        fn.stem for fn in volume_path.iterdir() if fn.stem not in ALL_LAYERS_ENUM_VALUES
+    ]
+    return unenumed_layers
+
+
 def process_pecha_for_annotation_content_report(pecha: OpenPechaGitRepo) -> list:
     """Process pecha for annotation content report"""
     """1. Pecha with not base file"""
@@ -207,7 +222,7 @@ def process_pecha_for_annotation_content_report(pecha: OpenPechaGitRepo) -> list
                     )
                 )
             )
-        unenumed_layers = get_unenumed_layer_names_from_pecha(pecha)
+        unenumed_layers = get_unenumed_layer_names_from_pecha_volume(pecha, volume)
         if unenumed_layers:
             pecha_data.extend(
                 process_unenumed_layers_for_annotation_content_report(
