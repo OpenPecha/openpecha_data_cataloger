@@ -23,7 +23,8 @@ class AnnotationCataloger:
     annotation_type: Optional[str] = None
     is_annotation_type_enumed: Optional[bool] = False
     has_annotations: Optional[bool] = None
-    """'annotations' not included in the report"""
+    """'annotations'and 'base file length' not included in the report"""
+    base_file_length: Optional[int] = None
     annotations: Optional[Dict] = field(default_factory=dict)
     """check if annotations is a list of dict or dict of dict"""
     has_annotation_id_missing: Optional[bool] = False
@@ -36,18 +37,21 @@ class AnnotationCataloger:
     has_start_end_in_span: Optional[bool] = False
     start_greater_equal_than_end: Dict = field(default_factory=dict)
     start_end_negative_values: Dict = field(default_factory=dict)
+    start_end_greater_than_base_file_length: Dict = field(default_factory=dict)
 
     def __init__(
         self,
         pecha_id,
         volume_name,
         annotation_content: Optional[dict] = None,
+        base_file_length: Optional[int] = None,
         layer: Optional[LayerEnum] = None,
     ):
         self.pecha_id = pecha_id
         self.volume_name = volume_name
-        self.layer = layer
         self.annotation_content = annotation_content
+        self.base_file_length = base_file_length
+        self.layer = layer
         self.load_fields()
 
     def load_fields(self):
@@ -119,12 +123,18 @@ class AnnotationCataloger:
             return
         self.start_greater_equal_than_end = {}
         self.start_end_negative_values = {}
+        self.start_end_greater_than_base_file_length = {}
         for annotation_id, annotation in self.annotations.items():
             if "start" in annotation["span"] and "end" in annotation["span"]:
-                if annotation["span"]["start"] >= annotation["span"]["end"]:
+                start, end = annotation["span"]["start"], annotation["span"]["end"]
+                if start >= end:
                     self.start_greater_equal_than_end[annotation_id] = annotation
-                if annotation["span"]["start"] < 0 or annotation["span"]["end"] < 0:
+                if start < 0 or end < 0:
                     self.start_end_negative_values[annotation_id] = annotation
+                if start > self.base_file_length or end > self.base_file_length:
+                    self.start_end_greater_than_base_file_length[
+                        annotation_id
+                    ] = annotation
 
     def compare_with_required_fields(self):
         base_class = _get_annotation_class(self.layer)

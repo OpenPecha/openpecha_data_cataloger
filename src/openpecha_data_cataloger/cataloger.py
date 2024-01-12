@@ -187,14 +187,20 @@ def process_pecha_for_annotation_content_report(pecha: OpenPechaGitRepo) -> list
                 )
             )
             continue
+        base_file_length = len(pecha.read_base_file(volume))
         for layer in layers:
             annotation_content = pecha.read_layers_file(
                 base_name=volume, layer_name=layer
             )
+
             pecha_data.append(
                 create_row_for_annotation_content_report(
                     AnnotationCataloger(
-                        pecha.pecha_id, volume, annotation_content, layer
+                        pecha.pecha_id,
+                        volume,
+                        annotation_content,
+                        base_file_length,
+                        layer,
                     )
                 )
             )
@@ -202,7 +208,7 @@ def process_pecha_for_annotation_content_report(pecha: OpenPechaGitRepo) -> list
         if unenumed_layers:
             pecha_data.extend(
                 process_unenumed_layers_for_annotation_content_report(
-                    pecha, unenumed_layers, volume
+                    pecha, unenumed_layers, volume, base_file_length
                 )
             )
 
@@ -220,7 +226,7 @@ def create_row_for_annotation_content_report(
 
 
 def process_unenumed_layers_for_annotation_content_report(
-    pecha, unenumed_layers, volume
+    pecha, unenumed_layers, volume, base_file_length
 ) -> list:
     """Process pecha that has"""
     unenumed_layer_data = []
@@ -229,7 +235,9 @@ def process_unenumed_layers_for_annotation_content_report(
         annotation_content = load_yaml(layer_fn)
         unenumed_layer_data.append(
             create_row_for_annotation_content_report(
-                AnnotationCataloger(pecha.pecha_id, volume, annotation_content)
+                AnnotationCataloger(
+                    pecha.pecha_id, volume, annotation_content, base_file_length
+                )
             )
         )
     return unenumed_layer_data

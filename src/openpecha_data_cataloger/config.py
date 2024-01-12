@@ -58,5 +58,6 @@ ANNOTATION_CONTENT_KEYS = OrderedSet(
         "has_start_end_in_span",
         "start_greater_equal_than_end",
         "start_end_negative_values",
+        "start_end_greater_than_base_file_length",
     ]
 )
