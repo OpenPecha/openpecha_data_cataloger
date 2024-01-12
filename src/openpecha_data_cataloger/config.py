@@ -57,5 +57,6 @@ ANNOTATION_CONTENT_KEYS = OrderedSet(
         "has_span_annotation",
         "has_start_end_in_span",
         "start_greater_equal_than_end",
+        "start_end_negative_values",
     ]
 )

@@ -35,6 +35,7 @@ class AnnotationCataloger:
     has_span_annotation: Optional[bool] = False
     has_start_end_in_span: Optional[bool] = False
     start_greater_equal_than_end: Dict = field(default_factory=dict)
+    start_end_negative_values: Dict = field(default_factory=dict)
 
     def __init__(
         self,
@@ -117,10 +118,13 @@ class AnnotationCataloger:
         if self.annotations is None:
             return
         self.start_greater_equal_than_end = {}
+        self.start_end_negative_values = {}
         for annotation_id, annotation in self.annotations.items():
             if "start" in annotation["span"] and "end" in annotation["span"]:
                 if annotation["span"]["start"] >= annotation["span"]["end"]:
                     self.start_greater_equal_than_end[annotation_id] = annotation
+                if annotation["span"]["start"] < 0 or annotation["span"]["end"] < 0:
+                    self.start_end_negative_values[annotation_id] = annotation
 
     def compare_with_required_fields(self):
         base_class = _get_annotation_class(self.layer)
