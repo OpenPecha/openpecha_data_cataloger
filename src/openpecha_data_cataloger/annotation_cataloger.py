@@ -23,6 +23,8 @@ class AnnotationCataloger:
     annotation_type: Optional[str] = None
     is_annotation_type_enumed: Optional[bool] = False
     has_annotations: Optional[bool] = None
+    """check if annotations is a list of dict or dict of dict"""
+    has_annotation_id_missing: Optional[bool] = False
     annotation_fields: List = field(default_factory=list)
 
     def __init__(
@@ -65,6 +67,7 @@ class AnnotationCataloger:
         if self.has_annotations:
             annotations = self.annotation_content.get("annotations")
             if isinstance(annotations, list):
+                self.has_annotation_id_missing = True
                 annotations = merge_list_of_dicts(annotations)
             if isinstance(annotations, dict):
                 annotation = next(iter(annotations.values()), None)
@@ -74,6 +77,7 @@ class AnnotationCataloger:
 
 def merge_list_of_dicts(list_of_dicts: List[dict]) -> dict:
     """Merge list of dicts into one dict"""
+    """if annotations is list of dicts, annotation id is missing"""
     new_dict = {}
     for idx, item in enumerate(list_of_dicts):
         new_dict[idx] = item
