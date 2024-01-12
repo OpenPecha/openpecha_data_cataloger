@@ -83,6 +83,16 @@ class AnnotationCataloger:
                         for field_name, field_info in fields.items()
                         if field_info.required
                     ]
+                    self.missing_annotation_fields = [
+                        annotation_field
+                        for annotation_field in self.required_annotation_fields
+                        if annotation_field not in self.annotation_fields
+                    ]
+                    self.extra_annotation_fields = [
+                        annotation_field
+                        for annotation_field in self.annotation_fields
+                        if annotation_field not in self.required_annotation_fields
+                    ]
 
 
 def merge_list_of_dicts(list_of_dicts: List[dict]) -> dict:
