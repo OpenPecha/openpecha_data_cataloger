@@ -12,7 +12,6 @@ from openpecha_data_cataloger.config import (
 @dataclass
 class AnnotationCataloger:
     pecha_id: str
-    volume_name: str
     layer: Optional[LayerEnum] = None
     has_base_file: bool = False
     annotation_file_name: Optional[str] = None
@@ -98,6 +97,7 @@ class AnnotationCataloger:
         self.has_annotations = True
         annotations = self.annotation_content["annotations"]
         if isinstance(annotations, list):
+            self.has_annotation_id_missing = True
             self.annotations = merge_list_of_dicts(annotations)
         else:
             self.annotations = annotations

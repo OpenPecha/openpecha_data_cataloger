@@ -73,7 +73,10 @@ class Cataloger:
         all_data = []
 
         for pecha in self.pechas:
-            all_data.extend(process_pecha_for_annotation_content_report(pecha))
+            try:
+                all_data.extend(process_pecha_for_annotation_content_report(pecha))
+            except FileNotFoundError:
+                pass
 
         df = pd.DataFrame(all_data, columns=keys)
         return df
