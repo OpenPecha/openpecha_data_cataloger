@@ -24,17 +24,20 @@ class AnnotationCataloger:
     is_annotation_type_enumed: Optional[bool] = False
     has_annotations: Optional[bool] = None
     """'annotations'and 'base file length' not included in the report"""
-    base_file_length: Optional[int] = None
+    base_file_length: int = -1
     annotations: Optional[Dict] = field(default_factory=dict)
     """check if annotations is a list of dict or dict of dict"""
     has_annotation_id_missing: Optional[bool] = False
     annotation_fields: List = field(default_factory=list)
+    """check if an obj can be instantiated with _get_annotation_class"""
+    has_annotation_field_validation_error: bool = False
     """from using _get_annotation_class"""
     required_annotation_fields: List = field(default_factory=list)
     missing_annotation_fields: List = field(default_factory=list)
     extra_annotation_fields: List = field(default_factory=list)
     has_span_annotation: Optional[bool] = False
     has_start_end_in_span: Optional[bool] = False
+    start_end_are_integer: Optional[dict] = field(default_factory=dict)
     start_greater_equal_than_end: Dict = field(default_factory=dict)
     start_end_negative_values: Dict = field(default_factory=dict)
     start_end_greater_than_base_file_length: Dict = field(default_factory=dict)
@@ -50,7 +53,8 @@ class AnnotationCataloger:
         self.pecha_id = pecha_id
         self.volume_name = volume_name
         self.annotation_content = annotation_content
-        self.base_file_length = base_file_length
+        if base_file_length is not None:
+            self.base_file_length = base_file_length
         self.layer = layer
         self.load_fields()
 
@@ -107,7 +111,7 @@ class AnnotationCataloger:
         if first_annotation:
             self.annotation_fields = list(first_annotation.keys())
         if self.layer:
-            self.compare_with_required_fields()
+            self.compare_with_required_fields(first_annotation)
 
     def process_span_annotation(self, annotation):
         if annotation is None:
@@ -124,9 +128,13 @@ class AnnotationCataloger:
         self.start_greater_equal_than_end = {}
         self.start_end_negative_values = {}
         self.start_end_greater_than_base_file_length = {}
+        self.start_end_are_integer = {}
         for annotation_id, annotation in self.annotations.items():
             if "start" in annotation["span"] and "end" in annotation["span"]:
                 start, end = annotation["span"]["start"], annotation["span"]["end"]
+                if not isinstance(start, int) or not isinstance(end, int):
+                    self.start_end_are_integer[annotation_id] = annotation
+                    continue
                 if start >= end:
                     self.start_greater_equal_than_end[annotation_id] = annotation
                 if start < 0 or end < 0:
@@ -136,9 +144,15 @@ class AnnotationCataloger:
                         annotation_id
                     ] = annotation
 
-    def compare_with_required_fields(self):
+    def compare_with_required_fields(self, first_annotation: Dict):
         base_class = _get_annotation_class(self.layer)
         fields = base_class.__fields__
+        try:
+            base_class.parse_obj(first_annotation)
+            self.has_annotation_field_validation_error = False
+        except:  # noqa
+            self.has_annotation_field_validation_error = True
+
         self.required_annotation_fields = [
             name for name, field_info in fields.items() if field_info.required
         ]

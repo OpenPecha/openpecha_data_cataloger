@@ -245,6 +245,6 @@ def process_unenumed_layers_for_annotation_content_report(
 
 if __name__ == "__main__":
     cataloger = Cataloger()
-    cataloger.load_pechas(pecha_ids=["P000216"])
+    cataloger.load_pechas(pecha_ids=["P000216", "P000003"])
     df = cataloger.generate_annotation_content_report()
     df.to_csv(CATALOG_DIR / "annotation_content_report.csv")
