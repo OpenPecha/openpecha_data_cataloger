@@ -28,6 +28,8 @@ class AnnotationCataloger:
     annotation_fields: List = field(default_factory=list)
     """from using _get_annotation_class"""
     required_annotation_fields: List = field(default_factory=list)
+    missing_annotation_fields: List = field(default_factory=list)
+    extra_annotation_fields: List = field(default_factory=list)
 
     def __init__(
         self,
@@ -44,61 +46,76 @@ class AnnotationCataloger:
 
     def load_fields(self):
         if self.layer:
-            self.has_base_file = True
             self.is_annotation_file_name_enumed = True
         if self.annotation_content is not None:
-            self.load_annotation_content_related_fields()
+            self.process_annotation_content()
 
-    def load_annotation_content_related_fields(self):
+    def process_annotation_content(self):
         if self.annotation_content is None:
             return
         self.has_base_file = True
         self.base_fields = list(self.annotation_content.keys())
         self.undefined_base_fields = list(
-            set(self.annotation_content.keys()) - set(BASE_ANNOTATION_FEATURES)
+            set(self.base_fields) - set(BASE_ANNOTATION_FEATURES)
         )
+        self.process_annotation_type()
+        self.process_annotations()
 
+    def process_annotation_type(self):
+        if self.annotation_content is None:
+            return
         annotation_type = self.annotation_content.get("annotation_type")
-        if annotation_type is not None:
-            self.annotation_file_name = annotation_type
-            self.has_annotation_type = True
-            self.annotation_type = annotation_type
-            self.is_annotation_type_enumed = annotation_type in ALL_LAYERS_ENUM_VALUES
-            self.has_annotations = "annotations" in self.annotation_content
+        if annotation_type:
+            self.set_annotation_type_details(annotation_type)
 
-        if self.has_annotations:
-            annotations = self.annotation_content.get("annotations")
-            if isinstance(annotations, list):
-                self.has_annotation_id_missing = True
-                annotations = merge_list_of_dicts(annotations)
-            if isinstance(annotations, dict):
-                annotation = next(iter(annotations.values()), None)
-                if annotation is not None:
-                    self.annotation_fields = list(annotation.keys())
-                if self.layer:
-                    base_class = _get_annotation_class(self.layer)
-                    fields = base_class.__fields__
-                    self.required_annotation_fields = [
-                        field_name
-                        for field_name, field_info in fields.items()
-                        if field_info.required
-                    ]
-                    self.missing_annotation_fields = [
-                        annotation_field
-                        for annotation_field in self.required_annotation_fields
-                        if annotation_field not in self.annotation_fields
-                    ]
-                    self.extra_annotation_fields = [
-                        annotation_field
-                        for annotation_field in self.annotation_fields
-                        if annotation_field not in self.required_annotation_fields
-                    ]
+    def set_annotation_type_details(self, annotation_type):
+        self.annotation_file_name = annotation_type
+        self.has_annotation_type = True
+        self.annotation_type = annotation_type
+        self.is_annotation_type_enumed = annotation_type in ALL_LAYERS_ENUM_VALUES
+
+    def process_annotations(self):
+
+        if (
+            self.annotation_content is None
+            or "annotations" not in self.annotation_content
+        ):
+            return
+        self.has_annotations = True
+        annotations = self.annotation_content["annotations"]
+        self.process_annotation_data(annotations)
+
+    def process_annotation_data(self, annotations):
+        if isinstance(annotations, list):
+            self.has_annotation_id_missing = True
+            annotations = merge_list_of_dicts(annotations)
+        if isinstance(annotations, dict):
+            self.analyze_annotation_fields(annotations)
+
+    def analyze_annotation_fields(self, annotations):
+        first_annotation = next(iter(annotations.values()), None)
+        if first_annotation:
+            self.annotation_fields = list(first_annotation.keys())
+        if self.layer:
+            self.compare_with_required_fields()
+
+    def compare_with_required_fields(self):
+        base_class = _get_annotation_class(self.layer)
+        fields = base_class.__fields__
+        self.required_annotation_fields = [
+            name for name, field_info in fields.items() if field_info.required
+        ]
+        self.missing_annotation_fields = [
+            name
+            for name in self.required_annotation_fields
+            if name not in self.annotation_fields
+        ]
+        self.extra_annotation_fields = [
+            name
+            for name in self.annotation_fields
+            if name not in self.required_annotation_fields
+        ]
 
 
 def merge_list_of_dicts(list_of_dicts: List[dict]) -> dict:
-    """Merge list of dicts into one dict"""
-    """if annotations is list of dicts, annotation id is missing"""
-    new_dict = {}
-    for idx, item in enumerate(list_of_dicts):
-        new_dict[idx] = item
-    return new_dict
+    return {idx: item for idx, item in enumerate(list_of_dicts)}
