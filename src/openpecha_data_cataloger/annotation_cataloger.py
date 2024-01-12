@@ -30,6 +30,8 @@ class AnnotationCataloger:
     required_annotation_fields: List = field(default_factory=list)
     missing_annotation_fields: List = field(default_factory=list)
     extra_annotation_fields: List = field(default_factory=list)
+    has_span_annotation: Optional[bool] = False
+    has_start_end_in_span: Optional[bool] = False
 
     def __init__(
         self,
@@ -94,10 +96,19 @@ class AnnotationCataloger:
 
     def analyze_annotation_fields(self, annotations):
         first_annotation = next(iter(annotations.values()), None)
+        self.process_span_annotation(first_annotation)
         if first_annotation:
             self.annotation_fields = list(first_annotation.keys())
         if self.layer:
             self.compare_with_required_fields()
+
+    def process_span_annotation(self, annotation):
+        if annotation is None:
+            return
+        self.has_span_annotation = "span" in annotation
+        if self.has_span_annotation:
+            if "start" in annotation["span"] and "end" in annotation["span"]:
+                self.has_start_end_in_span = True
 
     def compare_with_required_fields(self):
         base_class = _get_annotation_class(self.layer)

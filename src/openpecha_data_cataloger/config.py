@@ -54,5 +54,7 @@ ANNOTATION_CONTENT_KEYS = OrderedSet(
         "required_annotation_fields",
         "missing_annotation_fields",
         "extra_annotation_fields",
+        "has_span_annotation",
+        "has_start_end_in_span",
     ]
 )
