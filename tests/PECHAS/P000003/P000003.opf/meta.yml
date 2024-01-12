@@ -1,0 +1,14 @@
+id: P000003
+initial_creation_type: ocr
+source_metadata:
+  id: bdr:W22083
+  title: བཀའ་འགྱུར། ༼ཧེ་མིས་བྲིས་མ།༽
+  author: ''
+  volumes: {}
+  access: http://purl.bdrc.io/admindata/AccessOpen
+  restrictedInChina: false
+major_versions:
+- raw-ocr:
+  - commit: https://github.com/OpenPecha/P000003/commit/5563836e818880aef9689ca37828c53d152e4acc
+  - description: Google OCR
+last_modified_at: 2021-12-16 15:31:04.998007
