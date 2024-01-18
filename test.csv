@@ -1,0 +1,9 @@
+,pecha_id,volume_name,has_base_file,annotation_file_name,is_annotation_file_name_enumed,base_fields,undefined_base_fields,has_annotation_type,annotation_type,is_annotation_type_enumed,has_annotations,has_annotation_id_missing,annotation_fields,has_annotation_field_validation_error,required_annotation_fields,missing_annotation_fields,extra_annotation_fields,has_span_annotation,has_start_end_in_span,start_end_are_integer,start_greater_equal_than_end,start_end_negative_values,start_end_greater_than_base_file_length
+0,P000216,v001,True,Yigchung,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Yigchung,True,True,False,['span'],False,['span'],[],[],True,True,{},"{'3e92bdc162b444fe96f12703fa880f0a': {'span': {'start': 189353, 'end': 189353}}}",{},{}
+1,P000216,v001,True,Author,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Author,True,True,True,['span'],False,['span'],[],[],True,True,{},{},{},{}
+2,P000216,v001,True,BookTitle,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,BookTitle,True,True,True,['span'],False,['span'],[],[],True,True,{},{},{},{}
+3,P000216,v001,True,Chapter,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Chapter,True,True,False,['span'],False,['span'],[],[],True,True,{},{},{},{}
+4,P000216,v001,True,Sabche,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Sabche,True,True,False,['span'],False,['span'],[],[],True,True,{},{},{},{}
+5,P000216,v001,True,Quotation,False,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Quotation,False,True,False,['span'],False,,,,True,True,{},{},{},{}
+6,I1A92E2D9,ABFB,True,Segment,True,"['id', 'annotation_type', 'revision', 'annotations']",[],True,Segment,True,True,False,['span'],False,['span'],[],[],True,True,{},{},{},{}
+7,P000003,v001,True,pagination,False,"['id', 'annotation_type', 'rev', 'content']","['rev', 'content']",True,pagination,False,False,False,,False,,,,False,False,,,,
