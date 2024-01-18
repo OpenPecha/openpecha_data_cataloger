@@ -20,7 +20,8 @@ def set_environment():
 
 
 ROOT_DIR = Path(__file__).parent.parent.parent
-CATALOG_DIR = _mkdir(ROOT_DIR / ".catalog")
+CATALOG_DIR = _mkdir(ROOT_DIR / "CATALOG")
+DATA_DIR = _mkdir(ROOT_DIR / "DATA")
 
 BASE_ANNOTATION_FEATURES = ["id", "annotation_type", "revision", "annotations"]
 ALL_LAYERS_ENUM_VALUES = [layer.value for layer in LayerEnum]
