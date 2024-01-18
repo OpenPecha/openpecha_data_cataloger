@@ -1,3 +1,4 @@
+import json
 import time
 from datetime import datetime
 from pathlib import Path
@@ -94,6 +95,23 @@ def download_github_file(
                 )
     except Exception as e:
         print(e)
+
+
+def combine_json_files(directory):
+    dir_path = Path(directory)
+    combined_data = {}
+
+    count = 0
+    for file_path in dir_path.glob("*.json"):
+        with open(file_path) as file:
+            data = json.load(file)
+
+            # Merge data
+            for key, value in data.items():
+                combined_data[key] = value
+                count += 1
+    print(count)
+    return combined_data
 
 
 def download_file(url: str, destination_folder_path: Path):

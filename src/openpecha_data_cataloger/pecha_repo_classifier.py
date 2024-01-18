@@ -14,7 +14,9 @@ class PechaRepoClassifier:
     def get_pechas_labels(self, pecha_ids: list):
         """Classify the pechas based on their repository contents."""
         pechas_labels = {}
-        for pecha_id in pecha_ids:
+        num_of_pechas = len(pecha_ids)
+        for num, pecha_id in enumerate(pecha_ids):
+            print(f"[{num+1}/{num_of_pechas}] Classifying pecha: {pecha_id} ")
             pechas_labels[pecha_id] = self.get_pecha_label(pecha_id)
         return pechas_labels
 
