@@ -105,7 +105,7 @@ class AnnotationCataloger:
         self.analyze_annotation_fields()
 
     def analyze_annotation_fields(self):
-        if self.annotations is None:
+        if self.annotations is None or self.annotations == {}:
             return
         first_annotation = next(iter(self.annotations.values()))
         self.process_span_annotation(first_annotation)
