@@ -228,4 +228,3 @@ PFDC52F7D: ErrorPecha with id PFDC52F7D doesn't exist
 PFE9F59EF: ErrorPecha with id PFE9F59EF doesn't exist
 PFF2C68BF: ErrorPecha with id PFF2C68BF doesn't exist
 PFF5CF90C: ErrorPecha with id PFF5CF90C doesn't exist
-initial_creation_type
