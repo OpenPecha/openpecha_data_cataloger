@@ -2,6 +2,7 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import requests
 import yaml
@@ -122,3 +123,7 @@ def download_file(url: str, destination_folder_path: Path):
         print(f"file downloaded: {destination_folder_path.name}")
     else:
         print(f"Failed to download: {response.status_code}")
+
+
+def remove_duplicates_and_empty_elements(my_list: List):
+    return list(dict.fromkeys(filter(None, my_list)))
