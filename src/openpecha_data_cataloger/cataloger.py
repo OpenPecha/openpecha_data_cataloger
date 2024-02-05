@@ -1,3 +1,4 @@
+import logging
 from collections import OrderedDict
 from enum import Enum
 from pathlib import Path
@@ -22,6 +23,22 @@ from openpecha_data_cataloger.utility import (
     load_yaml,
     merge_two_dictionary,
 )
+
+log_fn = "errors.log"
+error_id_log_fn = "error_ids.log"
+
+
+logging.basicConfig(
+    filename=str(log_fn),
+    level=logging.ERROR,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+
+def log_error_with_id(id_: str):
+    """Log error message with ID to a separate file."""
+    with open(error_id_log_fn, "a") as log_file:
+        log_file.write(f"{id_}\n")
 
 
 class Cataloger:
@@ -57,26 +74,40 @@ class Cataloger:
         """provide the folder path where pechas are located"""
         if pecha_ids is None:
             pecha_ids = self.pecha_ids
-        self.pechas = (self.load_pecha(pecha_id, path) for pecha_id in pecha_ids)
+        self.pechas = []
+        for pecha_id in pecha_ids:
+            try:
+                self.pechas.append(self.load_pecha(pecha_id, path))
+            except Exception as e:
+                print(f"Error loading pecha {pecha_id}: {e}")
 
     def load_pecha(self, pecha_id, path=None):
-        if path is None:
-            if Path(PECHAS_PATH / pecha_id).exists():
-                return OpenPechaGitRepo(pecha_id=pecha_id, path=PECHAS_PATH / pecha_id)
-            return OpenPechaGitRepo(pecha_id=pecha_id)
+        try:
+            if path is None:
+                if Path(PECHAS_PATH / pecha_id).exists():
+                    return OpenPechaGitRepo(
+                        pecha_id=pecha_id, path=PECHAS_PATH / pecha_id
+                    )
+                return OpenPechaGitRepo(pecha_id=pecha_id)
 
-        pecha_path = str(path / pecha_id)
-        return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
+            pecha_path = str(path / pecha_id)
+            return OpenPechaGitRepo(pecha_id=pecha_id, path=pecha_path)
+        except Exception as e:
+            raise Exception(f"{e}")
 
     def generate_annotation_content_report(self):
         keys = ANNOTATION_CONTENT_KEYS
         all_data = []
-
         for pecha in self.pechas:
             try:
                 all_data.extend(process_pecha_for_annotation_content_report(pecha))
-            except FileNotFoundError:
-                pass
+            except Exception as e:
+                error_message = str(e).replace("\n", " | ")
+                logging.error(
+                    f"Pecha :{pecha.pecha_id} Error occured while fetching meta data {error_message}"
+                )
+                log_error_with_id(pecha.pecha_id)
+                continue
 
         df = pd.DataFrame(all_data, columns=keys)
         return df
@@ -114,18 +145,27 @@ class Cataloger:
         all_data = []
 
         for pecha in self.pechas:
-            """meta already defined in openpecha toolkit"""
-            predefined_metadata = OrderedDict(vars(pecha.meta))
-            predefined_metadata = process_metadata_for_enum_names(predefined_metadata)
-            """meta from .opf/meta.yml"""
-            metadata = OrderedDict(get_meta_data_from_pecha(pecha))
-            merged_metadata = merge_two_dictionary(predefined_metadata, metadata)
-            all_data.append(merged_metadata)
+            try:
+                """meta already defined in openpecha toolkit"""
+                predefined_metadata = OrderedDict(vars(pecha.meta))
+                predefined_metadata = process_metadata_for_enum_names(
+                    predefined_metadata
+                )
+                """meta from .opf/meta.yml"""
+                metadata = OrderedDict(get_meta_data_from_pecha(pecha))
+                merged_metadata = merge_two_dictionary(predefined_metadata, metadata)
+                all_data.append(merged_metadata)
 
-            # Check if there are any new keys
-            new_keys = OrderedSet(predefined_metadata.keys()) - keys
-            if new_keys:
-                keys.update(new_keys)
+                # Check if there are any new keys
+                new_keys = OrderedSet(predefined_metadata.keys()) - keys
+                if new_keys:
+                    keys.update(new_keys)
+            except Exception as e:
+                error_message = str(e).replace("\n", " | ")
+                logging.error(
+                    f"Pecha :{pecha.pecha_id} Error occured while fetching meta data {error_message}"
+                )
+                log_error_with_id(pecha.pecha_id)
 
         # Creating DataFrame
         df = pd.DataFrame(all_data, columns=keys)
