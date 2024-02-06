@@ -1,0 +1,2 @@
+2024-02-06 13:13:40,887 - ERROR - Pecha :10df3300ae84901a884042ed9c68861 Error occured while fetching meta data Pecha not found at: /home/tenzin3/.openpecha/pechas/others/10df3300ae84901a884042ed9c68861/10df3300ae84901a884042ed9c68861.opf
+2024-02-06 13:13:42,201 - ERROR - Pecha :W00000003 Error occured while fetching layer files [Errno 20] Not a directory: '/home/tenzin3/.openpecha/pechas/others/W00000003/W00000003.opf/layers/Segment.yml'
