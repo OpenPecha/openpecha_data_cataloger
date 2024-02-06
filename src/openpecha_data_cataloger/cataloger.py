@@ -80,6 +80,10 @@ class Cataloger:
                 self.pechas.append(self.load_pecha(pecha_id, path))
             except Exception as e:
                 print(f"Error loading pecha {pecha_id}: {e}")
+                logging.error(
+                    f"Pecha :{pecha_id} Error occured while fetching meta data {e}"
+                )
+                log_error_with_id(pecha_id)
 
     def load_pecha(self, pecha_id, path=None):
         try:
@@ -98,7 +102,9 @@ class Cataloger:
     def generate_annotation_content_report(self):
         keys = ANNOTATION_CONTENT_KEYS
         all_data = []
+        count = 1
         for pecha in self.pechas:
+            print(f"Processing {count}")
             try:
                 all_data.extend(process_pecha_for_annotation_content_report(pecha))
             except Exception as e:
@@ -107,7 +113,7 @@ class Cataloger:
                     f"Pecha :{pecha.pecha_id} Error occured while fetching meta data {error_message}"
                 )
                 log_error_with_id(pecha.pecha_id)
-                continue
+            count += 1
 
         df = pd.DataFrame(all_data, columns=keys)
         return df
@@ -133,6 +139,12 @@ class Cataloger:
                 curr_row["volume count"] = 0
                 curr_row["volumes"] = None
                 curr_row["unenumed volumes"] = None
+            except Exception as e:
+                error_message = str(e).replace("\n", " | ")
+                logging.error(
+                    f"Pecha :{pecha.pecha_id} Error occured while fetching layer files {error_message}"
+                )
+                log_error_with_id(pecha.pecha_id)
 
             all_data.append(curr_row)
 
