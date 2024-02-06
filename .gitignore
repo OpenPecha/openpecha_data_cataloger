@@ -1,6 +1,8 @@
 github_token.py
 .catalog
+run.py
 
+reports_analysis.ipynb
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
